@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Starter 新建产品'
+  short_description: '在当前项目初始化或增量开发，自动判断目录并保留现有内容'
+  default_prompt: '使用 $starter-new，在当前项目实现我的站点想法，先判断目录状态，再初始化或增量开发并验收。'

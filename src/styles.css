@@ -1,0 +1,105 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:is(.dark *));
+@theme inline {
+  --font-sans: 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+:root {
+  --background: #f8f9f7;
+  --foreground: #202722;
+  --card: #fff;
+  --card-foreground: #202722;
+  --popover: #fff;
+  --popover-foreground: #202722;
+  --primary: #236b4b;
+  --primary-foreground: #fff;
+  --secondary: #edf0eb;
+  --secondary-foreground: #303a33;
+  --muted: #f0f2ee;
+  --muted-foreground: #747d75;
+  --accent: #eaf1e8;
+  --accent-foreground: #236b4b;
+  --destructive: #c3453d;
+  --border: #e1e6df;
+  --input: #dce2d9;
+  --ring: #548b65;
+  --radius: 0.65rem;
+}
+.dark {
+  --background: #141a16;
+  --foreground: #edf0ea;
+  --card: #1b231d;
+  --card-foreground: #edf0ea;
+  --popover: #1b231d;
+  --popover-foreground: #edf0ea;
+  --primary: #a6d4aa;
+  --primary-foreground: #16271b;
+  --secondary: #29322a;
+  --secondary-foreground: #dce5db;
+  --muted: #252e27;
+  --muted-foreground: #a1ada0;
+  --accent: #293e2e;
+  --accent-foreground: #b3d9ad;
+  --destructive: #f38c85;
+  --border: #323d33;
+  --input: #39453a;
+  --ring: #a6d4aa;
+}
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply m-0 bg-background font-sans text-foreground antialiased;
+  }
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    -webkit-tap-highlight-color: transparent;
+  }
+  button:not(:disabled),
+  a {
+    cursor: pointer;
+  }
+  ::selection {
+    background: #d1e4cd;
+    color: #183d26;
+  }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 3px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

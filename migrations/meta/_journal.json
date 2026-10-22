@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1792596667906,
+      "tag": "0000_tan_tarot",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1792600539158,
+      "tag": "0001_ambitious_iceman",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1792601245089,
+      "tag": "0002_grey_alice",
+      "breakpoints": true
+    }
+  ]
+}

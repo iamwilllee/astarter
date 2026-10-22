@@ -1,0 +1,8 @@
+{
+  "version": "0.1.1",
+  "status": "local-preview",
+  "framework": "tanstack-start",
+  "runtime": "cloudflare-workers",
+  "modules": ["auth", "projects", "billing-test", "mail", "admin-readonly"],
+  "upstreamRelease": null
+}

@@ -1,0 +1,17 @@
+# pnpm setup generates .dev.vars with a fresh local-only secret.
+ENVIRONMENT=local
+APP_ORIGIN=http://127.0.0.1:3100
+MAIL_MODE=local
+BILLING_ENABLED=false
+BETTER_AUTH_SECRET=replace-with-a-random-secret-at-least-32-characters
+# Optional Stripe TEST credentials. Never use live keys in this starter.
+# STRIPE_SECRET_KEY=sk_test_...
+# STRIPE_WEBHOOK_SECRET=whsec_...
+# STRIPE_PRICE_ID=price_...
+
+# Optional Google OAuth. Use separate credentials for local/staging/production.
+GOOGLE_AUTH_ENABLED=false
+# GOOGLE_CLIENT_ID=...
+# GOOGLE_CLIENT_SECRET=...
+# Keep previews out of search results; explicitly enable on a real public product.
+PUBLIC_INDEXABLE=false

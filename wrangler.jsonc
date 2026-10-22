@@ -1,0 +1,61 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "starter",
+  "main": "@tanstack/react-start/server-entry",
+  "compatibility_date": "2026-10-19",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 0.1,
+  },
+  "vars": {
+    "ENVIRONMENT": "production",
+    "APP_ORIGIN": "http://127.0.0.1:3100",
+    "MAIL_MODE": "disabled",
+    "BILLING_ENABLED": "false",
+    "GOOGLE_AUTH_ENABLED": "false",
+    "PUBLIC_INDEXABLE": "false",
+    "MAIL_FROM": "Starter <no-reply@example.invalid>",
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "starter-db",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations",
+    },
+  ],
+  "r2_buckets": [
+    {
+      "binding": "FILES",
+      "bucket_name": "starter-files",
+    },
+  ],
+  "send_email": [
+    {
+      "name": "EMAIL",
+    },
+  ],
+  "env": {
+    "staging": {
+      "name": "starter-staging",
+      "vars": {
+        "ENVIRONMENT": "staging",
+        "APP_ORIGIN": "https://starter-staging.example.invalid",
+        "MAIL_MODE": "disabled",
+        "BILLING_ENABLED": "false",
+        "GOOGLE_AUTH_ENABLED": "false",
+        "PUBLIC_INDEXABLE": "false",
+        "MAIL_FROM": "Starter <no-reply@example.invalid>",
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "starter-staging-db",
+          "database_id": "00000000-0000-0000-0000-000000000001",
+          "migrations_dir": "migrations",
+        },
+      ],
+    },
+  },
+}
