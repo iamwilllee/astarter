@@ -1,6 +1,6 @@
-# 把 Starter 交给 Agent 使用
+# 把 Aster 交给 Agent 使用
 
-适用版本：v0.1.1。推荐入口是 `$starter-new` Skill 或 `pnpm starter:new`，手动复制和长提示词保留为备用方式。直接在已打开的项目里提供产品需求即可；默认使用当前目录，也接受你指定的新路径。
+适用版本：v0.1.1。推荐入口是 `$aster-new` Skill 或 `pnpm aster:new`，手动复制和长提示词保留为备用方式。直接在已打开的项目里提供产品需求即可；默认使用当前目录，也接受你指定的新路径。
 
 ## 推荐：一句需求开始
 
@@ -10,24 +10,24 @@
 pnpm skill:install
 ```
 
-安装器把 `skills/starter-new` 链接到 `~/.agents/skills/starter-new`；已有同名 Skill 指向别处时会退出，不覆盖。该用户目录与软链接发现方式参见 [OpenAI 官方 Skill 文档](https://learn.chatgpt.com/docs/build-skills#where-codex-loads-local-skills)。保留底座源目录；若移动了它，需要检查旧链接并重新安装。
+安装器把 `skills/aster-new` 链接到 `~/.agents/skills/aster-new`；已有同名 Skill 指向别处时会退出，不覆盖。该用户目录与软链接发现方式参见 [OpenAI 官方 Skill 文档](https://learn.chatgpt.com/docs/build-skills#where-codex-loads-local-skills)。保留底座源目录；若移动了它，需要检查旧链接并重新安装。
 
 在新 Agent 会话中调用：
 
 ```text
-$starter-new 在当前项目做一个私人代码片段库：
+$aster-new 在当前项目做一个私人代码片段库：
 注册登录后能新建、搜索、编辑、删除自己的片段，中英文和手机可用。
 做完本地首版，暂不部署。
 ```
 
-Skill 先判断当前目录：没有目录就创建，空目录或只有 Git/说明/编辑器配置就原地初始化，已有 Starter 读取原进度继续，其他应用先检查再增量接入。已有内容不被整份模板覆盖。用户指定路径时按当前工作目录解析。随后记录需求并按要求开发、验收，无需为了初始化再切换一次任务。若 Skill 选择器尚未出现，先新开会话；仍不可见时直接让 Agent 读取 `skills/starter-new/SKILL.md`。其他支持 Skill 的 Agent 按自身的发现方式安装；不支持时使用 CLI。底座源码位于 [iamwilllee/astarter](https://github.com/iamwilllee/astarter)，先克隆再运行仓库命令；当前没有已发布的 npm 包，不要使用虚构的 `npx create-...` 或 `/starter-new` 内置命令。
+Skill 先判断当前目录：没有目录就创建，空目录或只有 Git/说明/编辑器配置就原地初始化，已有 Aster 读取原进度继续，其他应用先检查再增量接入。已有内容不被整份模板覆盖。用户指定路径时按当前工作目录解析。随后记录需求并按要求开发、验收，无需为了初始化再切换一次任务。若 Skill 选择器尚未出现，先新开会话；仍不可见时直接让 Agent 读取 `skills/aster-new/SKILL.md`。其他支持 Skill 的 Agent 按自身的发现方式安装；不支持时使用 CLI。底座源码位于 [iamwilllee/astarter](https://github.com/iamwilllee/astarter)，先克隆再运行仓库命令；当前没有已发布的 npm 包，不要使用虚构的 `npx create-...` 或 `/aster-new` 内置命令。
 
 ## 推荐：一个终端命令初始化
 
 从底座源目录执行：
 
 ```bash
-pnpm starter:new ../snippet-shelf --name "Snippet Shelf" --brief "私人代码片段库"
+pnpm aster:new ../snippet-shelf --name "Snippet Shelf" --brief "私人代码片段库"
 ```
 
 | 参数             | 作用                                                          |
@@ -42,7 +42,7 @@ pnpm starter:new ../snippet-shelf --name "Snippet Shelf" --brief "私人代码�
 
 命令默认完成干净复制、包名/展示名/Worker 名初始化、新产品 README 和 `PROJECT.md`、随机本地密钥、冻结依赖安装、`pnpm setup` 和生成文件格式化。保留许可、锁文件和底座来源版本；不继承原云 ID、域名路由、提供商密钥、`.npmrc` 凭据、开发库或私有产物。默认不配置 R2/EMAIL binding，云端功能保持关闭。源码业务逻辑和迁移仍然保留，实际产品需要 Agent 实现。
 
-已打开项目目录时可直接让 Skill 原地处理；初始化后仍在该项目继续。已有 Git 保留，已有 README 不改写而新增 STARTER.md；AGENTS 和 .gitignore 保留原内容并追加底座段落，编辑器配置不动。已有应用的 CLI 路径只检查，由 Agent 按原架构增量开发。
+已打开项目目录时可直接让 Skill 原地处理；初始化后仍在该项目继续。已有 Git 保留，已有 README 不改写而新增 ASTER.md；AGENTS 和 .gitignore 保留原内容并追加底座段落，编辑器配置不动。已有应用的 CLI 路径只检查，由 Agent 按原架构增量开发。
 
 初始化后在目标目录运行 `pnpm dev`。不会自动启动服务、切换当前聊天的项目目录、创建 Git 历史或部署。生成产品不再提供底座初始化命令，应回到原始底座创建下一个产品，避免把已有产品误当成模板。
 
@@ -64,7 +64,7 @@ pnpm project:check --ready   # 要求必需业务用例全部通过；未完成�
 
 环境检查即使在依赖缺失时也能运行；只检查本地状态和配置形状，不查询远端密钥或宣称供应商可用。被占用的端口是待识别的现有服务，不会被自动结束。恢复入口也不依赖已安装的包；它按需要安装冻结依赖，幂等执行本地 setup，保留原业务代码、密钥和验收记录。配置/密钥缺失时要求先恢复本产品配置，不自动换密钥。
 
-`PROJECT.md` 保存人类说明，机器计划保存任务与验收状态；运行时配置仍在原有配置文件中。机器计划由脚本使用稳定 JSON 格式写入，已从 Prettier 中排除。字段和完整示例见 [Skill 流程参考](../skills/starter-new/references/workflow.md)。旧的手工复制项目没有机器计划时，可继续原开发方式；恢复命令不会猜测或覆盖它，完整新流程请从初始化器创建。
+`PROJECT.md` 保存人类说明，机器计划保存任务与验收状态；运行时配置仍在原有配置文件中。机器计划由脚本使用稳定 JSON 格式写入，已从 Prettier 中排除。字段和完整示例见 [Skill 流程参考](../skills/aster-new/references/workflow.md)。旧的手工复制项目没有机器计划时，可继续原开发方式；恢复命令不会猜测或覆盖它，完整新流程请从初始化器创建。
 
 任务 implemented 需要源文件证据；用例 passed 需要本产品实际报告/截图文件。脚本检查路径存在、记录一致和 local/mock/real 的区分；**不会自动证明图片内容或业务正确**。Agent 需要真正运行流程、查看结果，再更新记录。模拟测试不能通过 scope=provider 的真实供应商用例，底座历史 QA 不能作为本产品证据。初始化和基础测试通过不等于业务完成，更不等于已上线。
 
@@ -77,7 +77,7 @@ pnpm project:check --ready   # 要求必需业务用例全部通过；未完成�
 下面这段用于已初始化项目；只有想放到别处时才额外给出路径。新建空项目也可以直接调用 Skill，由它识别当前目录。
 
 ```text
-请基于当前 Starter 开发这个产品。先读取 AGENTS.md、README.md、
+请基于当前 Aster 开发这个产品。先读取 AGENTS.md、README.md、
 docs/AGENT-GUIDE.md、docs/DEVELOPMENT.md 和 PROJECT.md，再检查现有实现。
 
 以 PROJECT.md 为需求来源，复用 TanStack Start + Cloudflare Workers/D1、
@@ -206,6 +206,6 @@ Agent 最终应该交付：
 
 邮箱认证、本地开发邮件、私有 CRUD、工作台、双语/主题、项目限额、只读管理员和测试支付同步代码已经存在。Google 和 CF 邮件已接线，仍需新产品自己的账号配置和真实验收；Stripe 只允许测试密钥。
 
-**AI 调用、R2 文件业务、消费额度账本、账户删除、团队组织及自动升级未实现。** 有这类需求时，应把它们作为新增业务任务，补授权、失败状态与验收。复制 Starter 不会自动获得真实登录供应商、发信资格或收款能力。
+**AI 调用、R2 文件业务、消费额度账本、账户删除、团队组织及自动升级未实现。** 有这类需求时，应把它们作为新增业务任务，补授权、失败状态与验收。复制 Aster 不会自动获得真实登录供应商、发信资格或收款能力。
 
 新产品后续更新底座时，先对照 `starter-version.json` 与底座 `CHANGELOG.md`，审阅差异和新迁移，保留产品改动，再回归。当前没有“一键无冲突升级”能力。

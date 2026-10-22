@@ -40,17 +40,7 @@ const files = [
   'eslint.config.js',
   'drizzle.config.ts',
 ]
-const directories = [
-  'src',
-  'public',
-  'migrations',
-  'scripts',
-  'skills',
-  'docs',
-  'tests',
-  '.github',
-  'qa',
-]
+const directories = ['src', 'public', 'migrations', 'scripts', 'skills', 'docs', 'tests', '.github']
 const ignored = new Set([
   '.git',
   'node_modules',
@@ -63,6 +53,8 @@ const ignored = new Set([
   'playwright-report',
   '.DS_Store',
   'private',
+  '.local',
+  'qa',
 ])
 function excluded(path) {
   const name = basename(path)
@@ -136,7 +128,7 @@ export function inspectTarget(source, target = process.cwd()) {
       target,
       mode: 'starter',
       entries,
-      action: '复用已有 Starter 产品；读取交接和状态，按需 project:resume 后继续业务。',
+      action: '复用已有 Aster 产品；读取交接和状态，按需 project:resume 后继续业务。',
     }
   if (existsSync(join(target, 'starter-version.json')))
     return {
@@ -206,13 +198,13 @@ export function createProject({
   source = realpathSync(source)
   if (existsSync(join(source, 'PROJECT.md')))
     throw new Error(
-      'Run this initializer from the Starter source, not an existing product with PROJECT.md',
+      'Run this initializer from the Aster source, not an existing product with PROJECT.md',
     )
   const context = inspectTarget(source, target)
   target = context.target
   if (inspect) return context
   if (context.mode === 'source')
-    throw new Error('Target must be outside the Starter source directory')
+    throw new Error('Target must be outside the Aster source directory')
   if (context.mode === 'file') throw new Error(context.action)
   if (['starter', 'starter-incomplete', 'existing'].includes(context.mode)) return context
   name = (name ?? basename(target)).trim()
@@ -237,7 +229,7 @@ export function createProject({
     'src/config/site.ts',
     'docs/templates/PROJECT-BRIEF.md',
   ]) {
-    if (!existsSync(join(source, file))) throw new Error(`Starter source is incomplete: ${file}`)
+    if (!existsSync(join(source, file))) throw new Error(`Aster source is incomplete: ${file}`)
     inspectTree(join(source, file))
   }
   for (const directory of directories)
@@ -265,7 +257,7 @@ export function createProject({
         appendFileSync(
           destination,
           (original ? (original.endsWith('\n') ? '\n' : '\n\n') : '') +
-            '# Starter local data\n' +
+            '# Aster local data\n' +
             lines.join('\n') +
             '\n',
         )
@@ -282,7 +274,7 @@ export function createProject({
   const manifest = JSON.parse(readFileSync(join(target, 'package.json'), 'utf8'))
   manifest.name = slug
   manifest.version = '0.1.0'
-  for (const command of ['starter:new', 'skill:install', 'test:starter'])
+  for (const command of ['aster:new', 'starter:new', 'skill:install', 'test:starter'])
     delete manifest.scripts[command]
   manifest.scripts.check = manifest.scripts.check.replace(' && pnpm test:starter', '')
   writeJson(join(target, 'package.json'), manifest)
@@ -365,13 +357,13 @@ export function createProject({
   )
   savePlan(target, productPlan)
   writeFileSync(
-    join(target, existsSync(join(target, 'README.md')) ? 'STARTER.md' : 'README.md'),
-    `# ${markdown(name)}\n\n基于 Starter 创建的本地产品，需求与交接见 [PROJECT.md](PROJECT.md)。\n\n` +
+    join(target, existsSync(join(target, 'README.md')) ? 'ASTER.md' : 'README.md'),
+    `# ${markdown(name)}\n\n基于 Aster 创建的本地产品，需求与交接见 [PROJECT.md](PROJECT.md)。\n\n` +
       '```bash\npnpm project:resume\npnpm dev\n```\n\n' +
       '英文：http://127.0.0.1:3100 · 中文：http://127.0.0.1:3100/zh\n\n' +
       '保留了底座示例业务；首次需求尚未实现。云资源、Google、真实邮件与 Stripe 均未配置或验收。\n\n' +
       '[开发手册](docs/DEVELOPMENT.md) · [Agent 指南](docs/AGENT-GUIDE.md) · [部署手册](docs/DEPLOYMENT.md)\n\n' +
-      '底座来源版本见 starter-version.json；qa/ 是底座历史证据，不代表本产品验收。\n',
+      '底座来源版本见 starter-version.json；本产品需独立完成业务验收。\n',
   )
   if (install) resumeProject(target)
   return { target, name, slug, installed: install, mode: 'initialized', previousMode: context.mode }
@@ -382,7 +374,7 @@ if (process.argv[1] && realpathSync(resolve(process.argv[1])) === fileURLToPath(
     const options = parseArgs(process.argv.slice(2))
     if (options.help)
       console.log(
-        'Usage: pnpm starter:new [directory] [--name "Product"] [--brief "Requirements"] [--plan plan.json] [--no-install] [--inspect]. Directory defaults to the current working directory.',
+        'Usage: pnpm aster:new [directory] [--name "Product"] [--brief "Requirements"] [--plan plan.json] [--no-install] [--inspect]. Directory defaults to the current working directory.',
       )
     else {
       const result = createProject({

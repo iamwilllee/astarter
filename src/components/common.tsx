@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router'
-import { ArrowUpRight, Moon, Sun, Languages, LoaderCircle, AlertCircle } from 'lucide-react'
+import { Moon, Sun, Languages, LoaderCircle, AlertCircle } from 'lucide-react'
 import { Button } from './ui/button'
 import { useI18n } from './providers'
 import type { ReactNode } from 'react'
@@ -13,9 +13,7 @@ export function Logo({ compact = false }: { compact?: boolean }) {
       className="flex items-center gap-2.5 font-semibold tracking-tight"
       aria-label={t('home_label', { name: site.name })}
     >
-      <span className="grid size-8 place-items-center rounded-lg bg-primary text-primary-foreground">
-        <ArrowUpRight size={21} strokeWidth={2.2} />
-      </span>
+      <img src="/brand/aster-icon.svg" alt="" width={32} height={32} className="size-8 shrink-0" />
       {!compact && (
         <span className="text-xl">
           {site.name}

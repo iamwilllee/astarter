@@ -25,7 +25,7 @@ writeFileSync(
       ENVIRONMENT: 'production',
       APP_ORIGIN: origin,
       MAIL_MODE: 'disabled',
-      MAIL_FROM: 'Starter <no-reply@example.invalid>',
+      MAIL_FROM: 'Aster <no-reply@example.invalid>',
       BILLING_ENABLED: 'false',
       GOOGLE_AUTH_ENABLED: 'true',
       PUBLIC_INDEXABLE: 'false',

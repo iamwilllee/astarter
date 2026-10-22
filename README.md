@@ -1,12 +1,12 @@
-# Starter
+# Aster
 
-**给下一个产品，一个能运行的起点。** 基于 TanStack Start 和 Cloudflare 的开源产品底座，MIT 许可，中文文档，适合独立开发与 AI 辅助开发。
+**给 Agent 一个可靠的起点。** 基于 TanStack Start 和 Cloudflare 的开源产品底座，MIT 许可，中文文档，适合独立开发与 AI 辅助开发。
 
 主要服务**海外 Web / AI 工具，兼顾国内**。先验证 Cloudflare 部署与 Stripe 测试订阅；国内访问、登录和支付按具体产品适配。已有项目不强制迁移。
 
-工作名为 Starter，源码仓库为 [iamwilllee/astarter](https://github.com/iamwilllee/astarter)。当前版本 **v0.1.1，本地预览版**：已实现并验证本地流程，尚未部署到 Cloudflare。Stripe 仅允许测试密钥，未完成真实测试账户的托管结账验收。
+源码仓库为 [iamwilllee/astarter](https://github.com/iamwilllee/astarter)。当前版本 **v0.1.1，本地预览版**：已实现并验证本地流程，尚未部署到 Cloudflare。Stripe 仅允许测试密钥，未完成真实测试账户的托管结账验收。
 
-![工作空间预览](qa/workspace-desktop.png)
+![Aster Logo](public/brand/aster-logo.svg)
 
 ## 开始使用
 
@@ -68,7 +68,7 @@ pnpm skill:install
 安装后，在已经打开的站点项目里直接说：
 
 ```text
-$starter-new 在当前项目做 Snippet Shelf：
+$aster-new 在当前项目做 Snippet Shelf：
 做一个私人代码片段库，支持新建、搜索、编辑和删除，中英文和手机可用。
 完成本地首版，暂不部署。
 ```
@@ -76,16 +76,16 @@ $starter-new 在当前项目做 Snippet Shelf：
 不通过 Agent，也可以一个终端命令初始化：
 
 ```bash
-pnpm starter:new ../snippet-shelf --name "Snippet Shelf" --brief "私人代码片段库"
+pnpm aster:new ../snippet-shelf --name "Snippet Shelf" --brief "私人代码片段库"
 ```
 
 目标可以是未创建的目录、已建好的空目录，或只有 Git/说明/编辑器配置的项目根目录；缺失的父目录会创建。命令原地补齐底座、替换产品名、生成 `PROJECT.md` 和独立密钥、安装依赖、迁移本地 D1。它保留示例业务，不会替你实现需求；业务开发由 Skill 中的 Agent 继续完成。只需要复制文件时加 `--no-install`。
 
-已有 README 保留，新说明写 STARTER.md；已有 AGENTS/.gitignore 追加底座约定，Git 与编辑器配置保留。已有 Starter 或其他应用只返回检查结果，由 Skill 复用原项目继续开发。可加 `--inspect` 只读查看判断结果；目标省略时使用命令当前目录，底座源目录仍受保护。
+已有 README 保留，新说明写 ASTER.md；已有 AGENTS/.gitignore 追加底座约定，Git 与编辑器配置保留。已有 Aster 或其他应用只返回检查结果，由 Skill 复用原项目继续开发。可加 `--inspect` 只读查看判断结果；目标省略时使用命令当前目录，底座源目录仍受保护。
 
 新产品不继承开发库、真实云 ID、密钥或发信/支付开关；保留许可、迁移和底座版本。初始化不建 Git 仓库、不创建云资源、不自动启动服务。生成项目的命令在新目录执行，Agent 的写入权限仍由当前工具决定。
 
-详见 [Agent 使用指南](docs/AGENT-GUIDE.md)；[产品需求模板](docs/templates/PROJECT-BRIEF.md) 由命令自动生成到新项目的 `PROJECT.md`。Skill 安装为指向此底座的链接；保留底座目录。当前未发布 npm 包，其他 Agent 可克隆本仓库后直接使用 CLI 或读取仓库中的 [Skill](skills/starter-new/SKILL.md)。
+详见 [Agent 使用指南](docs/AGENT-GUIDE.md)；[产品需求模板](docs/templates/PROJECT-BRIEF.md) 由命令自动生成到新项目的 `PROJECT.md`。Skill 安装为指向此底座的链接；保留底座目录。当前未发布 npm 包，其他 Agent 可克隆本仓库后直接使用 CLI 或读取仓库中的 [Skill](skills/aster-new/SKILL.md)。
 
 - `src/config/site.ts`：品牌名、描述与服务端项目上限。页面示例文案和套餐说明也需相应调整。
 - `src/styles.css`、`public/favicon.svg`：主题与图标。
@@ -103,15 +103,14 @@ pnpm project:resume         # 初始化中断后继续，保留业务与密钥
 pnpm project:check --ready  # 检查必需业务验收记录，未完成时拒绝通过
 ```
 
-Skill 根据上下文填写机器计划并保留判断依据，Agent 按业务步骤实测并保存证据。源码底座不填虚构产品计划；生成项目中的 `starter.project.json` 才是该产品的状态记录。基础检查与实际业务验收分开，详细格式见 [流程说明](skills/starter-new/references/workflow.md)。
+Skill 根据上下文填写机器计划并保留判断依据，Agent 按业务步骤实测并保存证据。源码底座不填虚构产品计划；生成项目中的 `starter.project.json` 才是该产品的状态记录。基础检查与实际业务验收分开，详细格式见 [流程说明](skills/aster-new/references/workflow.md)。
 
 ## 文档
 
 - [交给 Agent 使用](docs/AGENT-GUIDE.md) · [产品需求与交接模板](docs/templates/PROJECT-BRIEF.md)
-- [开发手册](docs/DEVELOPMENT.md) · [部署手册](docs/DEPLOYMENT.md) · [v0.1.1 验收记录](qa/acceptance-v0.1.1.md) · [v0.1 历史记录](qa/acceptance.md)
-- [实施方案与后续路线](docs/PROPOSAL.md) · [前端约定](docs/FRONTEND.md)
-- [Cloudflare 服务与成本](docs/CLOUDFLARE.md) · [竞品对比](docs/COMPETITORS.md) · [研究来源](docs/SOURCES.md)
-- [对标 TanStarter：差距与下一步](docs/TANSTARTER-GAPS.md)
+- [开发手册](docs/DEVELOPMENT.md) · [前端约定](docs/FRONTEND.md)
+- [Cloudflare 架构](docs/CLOUDFLARE.md) · [部署手册](docs/DEPLOYMENT.md)
+- [品牌与 Logo](docs/BRAND.md) · [更新记录](CHANGELOG.md)
 - [贡献](CONTRIBUTING.md) · [安全说明](SECURITY.md) · [MIT 许可](LICENSE)
 
 开源许可免费；云服务、域名、邮件、模型及支付服务可能收费。Cloudflare 免费额度不等于完整 SaaS 可永久零成本运行；真实部署和发信需要按账户能力单独验收。

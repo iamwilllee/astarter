@@ -92,7 +92,7 @@ function Home() {
                   ))}
                 </div>
                 <span className="font-mono text-[10px] text-muted-foreground">
-                  your-next-product / starter
+                  your-next-product / aster
                 </span>
                 <Box className="size-3 text-muted-foreground" />
               </div>

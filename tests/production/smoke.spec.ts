@@ -10,7 +10,7 @@ test('built Worker renders English/Chinese SSR and isolates concurrent language 
     expect(response.status()).toBe(200)
     const html = await response.text()
     expect(html).toContain(i % 2 ? 'lang="zh-CN"' : 'lang="en"')
-    expect(html).toContain(i % 2 ? '少一些重复' : 'Less setup.')
+    expect(html).toContain(i % 2 ? '给 Agent 一个' : 'For your agent.')
     expect(html).toContain('noindex,nofollow')
     expect(html).not.toContain('fixture-only-not-a-real-google-secret')
   }

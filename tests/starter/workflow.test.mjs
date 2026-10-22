@@ -15,7 +15,7 @@ import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { spawnSync } from 'node:child_process'
-import { createProject } from '../../skills/starter-new/scripts/create-project.mjs'
+import { createProject } from '../../skills/aster-new/scripts/create-project.mjs'
 import {
   initialPlan,
   parsePlan,
@@ -170,6 +170,8 @@ test('business readiness requires business evidence, not just bootstrap or basel
   plan.acceptance[0].evidence = ['missing.md']
   assert.ok(planProblems(root, plan).errors.length)
   plan.acceptance[0].evidence = ['qa/acceptance.md']
+  mkdirSync(join(root, 'qa'), { recursive: true })
+  writeFileSync(join(root, 'qa/acceptance.md'), '# Historical starter evidence\n')
   assert.ok(planProblems(root, plan).errors.some((item) => item.includes('历史')))
   writeFileSync(join(dirname(root), 'outside.md'), 'not project evidence')
   symlinkSync(join(dirname(root), 'outside.md'), join(root, 'linked.md'))

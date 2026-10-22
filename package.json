@@ -1,5 +1,5 @@
 {
-  "name": "starter",
+  "name": "aster",
   "version": "0.1.1",
   "private": true,
   "type": "module",
@@ -29,13 +29,14 @@
     "deploy:check": "node scripts/deploy.mjs --check",
     "locale:check": "node scripts/check-locales.mjs",
     "test:production": "node scripts/test-production.mjs",
-    "starter:new": "node skills/starter-new/scripts/create-project.mjs",
+    "starter:new": "node skills/aster-new/scripts/create-project.mjs",
     "skill:install": "node scripts/install-skill.mjs",
     "test:starter": "node --test tests/starter/*.test.mjs",
     "project:doctor": "node scripts/project.mjs doctor",
     "project:status": "node scripts/project.mjs status",
     "project:check": "node scripts/project.mjs check",
-    "project:resume": "node scripts/project-resume.mjs"
+    "project:resume": "node scripts/project-resume.mjs",
+    "aster:new": "node skills/aster-new/scripts/create-project.mjs"
   },
   "dependencies": {
     "@base-ui/react": "1.9.0",

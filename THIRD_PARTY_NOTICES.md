@@ -29,4 +29,4 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-Other dependencies retain their own package licenses in `node_modules`. Use `pnpm licenses list` to inspect the installed dependency licenses before redistribution. This project is an independent implementation; competitor repositories in `docs/research/` are research references, not imported application code. The arrow logo is drawn locally as SVG. No paid template assets or code are included.
+Other dependencies retain their own package licenses in `node_modules`. Use `pnpm licenses list` to inspect the installed dependency licenses before redistribution. Aster is an independent implementation. The Aster flower mark and wordmark are original SVG assets distributed under the repository's MIT license. No paid template assets or code are included.

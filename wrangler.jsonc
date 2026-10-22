@@ -15,7 +15,7 @@
     "BILLING_ENABLED": "false",
     "GOOGLE_AUTH_ENABLED": "false",
     "PUBLIC_INDEXABLE": "false",
-    "MAIL_FROM": "Starter <no-reply@example.invalid>",
+    "MAIL_FROM": "Aster <no-reply@example.invalid>",
   },
   "d1_databases": [
     {
@@ -46,7 +46,7 @@
         "BILLING_ENABLED": "false",
         "GOOGLE_AUTH_ENABLED": "false",
         "PUBLIC_INDEXABLE": "false",
-        "MAIL_FROM": "Starter <no-reply@example.invalid>",
+        "MAIL_FROM": "Aster <no-reply@example.invalid>",
       },
       "d1_databases": [
         {

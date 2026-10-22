@@ -1,4 +1,4 @@
-# Starter development guide
+# Aster development guide
 
 ## Project
 
@@ -6,11 +6,11 @@ TanStack Start + React + TypeScript, Cloudflare Workers/D1, Better Auth + Drizzl
 
 ## Product handoff
 
-Use the bundled `starter-new` Skill in the current project by default; explicit target paths are optional. It detects missing/empty/metadata-only directories, existing Starter products and other apps. Initialize in place when safe; preserve Git, README, personal rules and editor config. Existing apps are inspected and extended rather than overwritten or forcibly migrated. The CLI can also run from the original Starter source with a target directory. Read `docs/AGENT-GUIDE.md` and the product's `PROJECT.md` before implementation. Use `docs/templates/PROJECT-BRIEF.md` to create a brief when needed; keep business scope and human handoff there. Track choices/provenance, tasks, current acceptance evidence and bootstrap checkpoints in `starter.project.json`. Use `project:doctor`/`project:status` before resuming and `project:resume` for interrupted local initialization. Never mark mock tests as real provider acceptance; reset affected cases when requirements or code change. `project:check --ready` checks records and paths, not business behavior. Preserve this guide's technical boundaries and the recorded starter source version. Never treat historical starter QA as acceptance of a new product.
+Use the bundled `aster-new` Skill in the current project by default; explicit target paths are optional. It detects missing/empty/metadata-only directories, existing Aster products and other apps. Initialize in place when safe; preserve Git, README, personal rules and editor config. Existing apps are inspected and extended rather than overwritten or forcibly migrated. The CLI can also run from the original Aster source with a target directory. Read `docs/AGENT-GUIDE.md` and the product's `PROJECT.md` before implementation. Use `docs/templates/PROJECT-BRIEF.md` to create a brief when needed; keep business scope and human handoff there. Track choices/provenance, tasks, current acceptance evidence and bootstrap checkpoints in `starter.project.json`. Use `project:doctor`/`project:status` before resuming and `project:resume` for interrupted local initialization. Never mark mock tests as real provider acceptance; reset affected cases when requirements or code change. `project:check --ready` checks records and paths, not business behavior. Preserve this guide's technical boundaries and the recorded starter source version. Keep local QA, personal research and conversation records out of the public repository; every product needs its own acceptance evidence.
 
 ## Map
 
-- `skills/starter-new`: Skill entrypoint and deterministic new-product initializer.
+- `skills/aster-new`: Skill entrypoint and deterministic new-product initializer.
 - `scripts/project*.mjs`: project plan validation, redacted doctor, status and local-only bootstrap recovery.
 - `scripts/install-skill.mjs`: install a non-overwriting user Skill link.
 - `tests/starter`: initializer isolation and overwrite protection checks.

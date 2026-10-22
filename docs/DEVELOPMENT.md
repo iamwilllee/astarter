@@ -1,6 +1,6 @@
 # 开发手册
 
-第一次把底座用于新产品，请先读 [Agent 使用指南](AGENT-GUIDE.md)，通过 `$starter-new` 或 `pnpm starter:new` 初始化新目录，自动生成 [产品需求与交接模板](templates/PROJECT-BRIEF.md)。本手册说明开发实现与运行约定。
+第一次把底座用于新产品，请先读 [Agent 使用指南](AGENT-GUIDE.md)，通过 `$aster-new` 或 `pnpm aster:new` 初始化新目录，自动生成 [产品需求与交接模板](templates/PROJECT-BRIEF.md)。本手册说明开发实现与运行约定。
 
 ## 本地工作流
 

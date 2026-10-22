@@ -14,5 +14,6 @@ playwright-report/
 !.env.example
 .DS_Store
 *.log
-qa/private/
+qa/
+.local/
 starter.project.json.tmp-*

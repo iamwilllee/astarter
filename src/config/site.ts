@@ -1,8 +1,8 @@
 export const site = {
-  name: 'Starter',
+  name: 'Aster',
   description: {
-    en: 'An open-source product foundation on TanStack Start and Cloudflare.',
-    zh: '从一个可靠的起点，做下一个产品。',
+    en: 'An open-source product foundation for AI agents, built on TanStack Start and Cloudflare.',
+    zh: '给 Agent 一个可靠的起点。基于 TanStack Start 与 Cloudflare 的开源产品底座。',
   },
   version: '0.1.1',
 } as const
