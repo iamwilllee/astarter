@@ -7,6 +7,14 @@ import { PageHeading, Loading, ErrorNotice } from '@/components/common'
 import { useI18n } from '@/components/providers'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -30,7 +38,6 @@ export const Route = createFileRoute('/app/projects')({
   }),
   component: Projects,
 })
-const selectClass = 'h-9 rounded-lg border bg-card px-3 text-xs text-foreground'
 function Projects() {
   const { t, locale } = useI18n()
   const { q = '', status = 'all' } = Route.useSearch()
@@ -103,7 +110,7 @@ function Projects() {
       />
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div className="relative w-full sm:max-w-xs">
-          <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={q}
             onChange={(event) => {
@@ -119,23 +126,25 @@ function Projects() {
         </div>
         <div className="flex items-center gap-2">
           <Filter size={14} className="text-muted-foreground" />
-          <select
-            aria-label={t('filter_project_status')}
-            className={selectClass}
+          <Select<Status>
+            items={{ all: t('all_statuses'), ...labels }}
             value={status}
-            onChange={(event) => {
-              void navigate({
-                search: (previous) => ({ ...previous, status: event.target.value as Status }),
-              })
+            onValueChange={(value) => {
+              if (value) void navigate({ search: (previous) => ({ ...previous, status: value }) })
             }}
           >
-            <option value="all">{t('all_statuses')}</option>
-            {Object.entries(labels).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger aria-label={t('filter_project_status')} className="w-40 bg-card">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t('all_statuses')}</SelectItem>
+              {Object.entries(labels).map(([value, label]) => (
+                <SelectItem key={value} value={value}>
+                  {label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <span className="ml-2 text-xs text-muted-foreground">
             {viewer.projectCount} / {viewer.billing.projectLimit}
           </span>
@@ -250,7 +259,7 @@ function Projects() {
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={submit} className="space-y-5">
-            <div className="space-y-2">
+            <div className="grid gap-2">
               <Label htmlFor="project-name">{t('project_name')}</Label>
               <Input
                 id="project-name"
@@ -261,32 +270,31 @@ function Projects() {
                 maxLength={80}
               />
             </div>
-            <div className="space-y-2">
+            <div className="grid gap-2">
               <Label htmlFor="project-description">{t('a_short_description')}</Label>
-              <textarea
+              <Textarea
                 id="project-description"
                 name="description"
                 rows={3}
                 defaultValue={editing?.description ?? ''}
                 maxLength={500}
-                className="w-full resize-y rounded-lg border bg-transparent px-3 py-2 text-sm"
                 placeholder={t('what_would_you_like_to_build')}
               />
             </div>
-            <div className="space-y-2">
+            <div className="grid gap-2">
               <Label htmlFor="project-status">{t('status')}</Label>
-              <select
-                id="project-status"
-                name="status"
-                defaultValue={editing?.status ?? 'idea'}
-                className={`${selectClass} w-full`}
-              >
-                {Object.entries(labels).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </select>
+              <Select name="status" items={labels} defaultValue={editing?.status ?? 'idea'}>
+                <SelectTrigger id="project-status">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(labels).map(([value, label]) => (
+                    <SelectItem key={value} value={value}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             {save.error && <ErrorNotice>{save.error.message}</ErrorNotice>}
             <DialogFooter>

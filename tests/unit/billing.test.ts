@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises'
 import Stripe from 'stripe'
 import { env } from 'cloudflare:workers'
 import { webhook, getBilling } from '../../src/modules/billing/billing.server'
+import { handleApi } from '../../src/server/api.server'
 
 const secret = 'whsec_local_fixture_only'
 const nativeFetch = globalThis.fetch
@@ -134,6 +135,26 @@ function eventRequest(id: string, type = 'customer.subscription.updated', live =
 }
 
 describe('signed Stripe events against real local D1', () => {
+  it('preserves a signed UTF-8 webhook through the API ingress without requiring a browser origin', async () => {
+    const payload = JSON.stringify({
+      id: 'evt_ingress',
+      type: 'unhandled.fixture',
+      livemode: false,
+      data: { object: { note: '字节保持一致 🌱' } },
+    })
+    const response = await handleApi(
+      new Request('http://127.0.0.1:3100/api/billing/webhook', {
+        method: 'POST',
+        body: payload,
+        headers: {
+          'stripe-signature': Stripe.webhooks.generateTestHeaderString({ payload, secret }),
+        },
+      }),
+    )
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual({ received: true })
+    expect(providerReads).toBe(0)
+  })
   it('continues reconciling subscriptions when new checkout is disabled', async () => {
     Object.assign(env, { BILLING_ENABLED: 'false' })
     await webhook(eventRequest('evt_checkout_disabled'))

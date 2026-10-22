@@ -12,6 +12,7 @@ import { Providers, useI18n } from '@/components/providers'
 import { site } from '@/config/site'
 import { translate, localizePath, type Locale } from '@/i18n/core'
 import { getPublicConfig } from '@/server/functions'
+import { Button } from '@/components/ui/button'
 
 export const Route = createRootRoute({
   validateSearch: (search: Record<string, unknown>): { _locale?: Locale } => ({
@@ -75,9 +76,9 @@ function Failure({ reset }: { reset: () => void }) {
     <main className="grid min-h-screen place-content-center gap-4 p-8 text-center">
       <h1 className="text-2xl font-semibold">{t('page_unavailable')}</h1>
       <p>{t('check_service')}</p>
-      <button onClick={reset} className="text-primary underline">
+      <Button onClick={reset} variant="link">
         {t('reload_page')}
-      </button>
+      </Button>
     </main>
   )
 }

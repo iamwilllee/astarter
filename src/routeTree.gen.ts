@@ -26,6 +26,7 @@ import { Route as AppProjectsRouteImport } from './routes/app.projects'
 import { Route as AppServicesRouteImport } from './routes/app.services'
 import { Route as AppSettingsRouteImport } from './routes/app.settings'
 import { Route as DevInboxRouteImport } from './routes/dev/inbox'
+import { Route as DevUiRouteImport } from './routes/dev/ui'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
 const IndexRoute = IndexRouteImport.update({
@@ -113,6 +114,11 @@ const DevInboxRoute = DevInboxRouteImport.update({
   path: '/dev/inbox',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DevUiRoute = DevUiRouteImport.update({
+  id: '/dev/ui',
+  path: '/dev/ui',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
@@ -136,6 +142,7 @@ export interface FileRoutesByFullPath {
   '/app/services': typeof AppServicesRoute
   '/app/settings': typeof AppSettingsRoute
   '/dev/inbox': typeof DevInboxRoute
+  '/dev/ui': typeof DevUiRoute
   '/app/': typeof AppIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
@@ -155,6 +162,7 @@ export interface FileRoutesByTo {
   '/app/services': typeof AppServicesRoute
   '/app/settings': typeof AppSettingsRoute
   '/dev/inbox': typeof DevInboxRoute
+  '/dev/ui': typeof DevUiRoute
   '/app': typeof AppIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
@@ -176,6 +184,7 @@ export interface FileRoutesById {
   '/app/services': typeof AppServicesRoute
   '/app/settings': typeof AppSettingsRoute
   '/dev/inbox': typeof DevInboxRoute
+  '/dev/ui': typeof DevUiRoute
   '/app/': typeof AppIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
@@ -198,6 +207,7 @@ export interface FileRouteTypes {
     | '/app/services'
     | '/app/settings'
     | '/dev/inbox'
+    | '/dev/ui'
     | '/app/'
     | '/api/auth/$'
   fileRoutesByTo: FileRoutesByTo
@@ -217,6 +227,7 @@ export interface FileRouteTypes {
     | '/app/services'
     | '/app/settings'
     | '/dev/inbox'
+    | '/dev/ui'
     | '/app'
     | '/api/auth/$'
   id:
@@ -237,6 +248,7 @@ export interface FileRouteTypes {
     | '/app/services'
     | '/app/settings'
     | '/dev/inbox'
+    | '/dev/ui'
     | '/app/'
     | '/api/auth/$'
   fileRoutesById: FileRoutesById
@@ -253,6 +265,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiSplatRoute: typeof ApiSplatRoute
   DevInboxRoute: typeof DevInboxRoute
+  DevUiRoute: typeof DevUiRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
 }
 
@@ -377,6 +390,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DevInboxRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dev/ui': {
+      id: '/dev/ui'
+      path: '/dev/ui'
+      fullPath: '/dev/ui'
+      preLoaderRoute: typeof DevUiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
@@ -419,6 +439,7 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiSplatRoute: ApiSplatRoute,
   DevInboxRoute: DevInboxRoute,
+  DevUiRoute: DevUiRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
 }
 export const routeTree = rootRouteImport

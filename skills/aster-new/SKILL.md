@@ -25,7 +25,7 @@ node <本 Skill 的真实目录>/scripts/create-project.mjs <目标绝对路径>
 也可省略目标参数并让命令工作目录为用户当前项目根目录；执行参数用数组传入，避免 shell 插值。首次使用需底座源已安装锁定依赖。
 
 - missing/empty：在该目录初始化，不要求用户先建或先删目录。
-- metadata：只有 Git、README.md、AGENTS.md、.gitignore、.gitkeep、.DS_Store 或 Agent/编辑器配置时，保留 Git 与原 README；新说明写入 STARTER.md，AGENTS.md 和 .gitignore 只追加底座约定与排除规则，不替换原规则。元数据软链接或异常类型会转已有项目检查，避免越界写入。
+- metadata：只有 Git、README.md、AGENTS.md、.gitignore、.gitkeep、.DS_Store 或 Agent/编辑器配置时，保留 Git 与原 README；新说明写入 ASTER.md，AGENTS.md 和 .gitignore 只追加底座约定与排除规则，不替换原规则。元数据软链接或异常类型会转已有项目检查，避免越界写入。
 - 初始化生成品牌、PROJECT.md、starter.project.json、独立本地密钥，安装依赖与迁移本地 D1。`--no-install` 只初始化文件。选择与需求未明确时保留待定；不继承输入计划中的任务/验收完成声明。
 
 ## 已有内容与恢复
@@ -41,6 +41,7 @@ node <本 Skill 的真实目录>/scripts/create-project.mjs <目标绝对路径>
 - 读取新目录的 `AGENTS.md`、`PROJECT.md`、`docs/DEVELOPMENT.md`；复杂复用/交接细节按需读 `docs/AGENT-GUIDE.md`。用目标目录作为后续命令的工作目录；当前对话不会因此自动切换项目目录或拥有新目录写权限。
 - 用户要求做产品时，初始化后继续实现，不在空骨架处停止。先说明可复用模块、首版范围与缺项，随后开发核心用户流程。以用户已授权的范围为准，不重复请求已有批准。
 - 使用底座的产品保留认证、私有数据隔离、英文默认及 `/zh`；使用现有设计系统和服务端约束。`PROJECT.md` 保存业务说明，`starter.project.json` 保存规范化选择、任务、验收证据与下一步；不要重复运行时配置。已接入流程工具的项目，每个里程碑运行 `pnpm project:check`。改变需求/实现后重置受影响用例，不能沿用过期证据；其他已有应用遵循自身实际约定。
+- 为 Aster 产品写界面前读 `docs/FRONTEND.md` 与现有 `src/components/ui/`。缺少 Select、Textarea 等控件时先在组件层补齐，业务页面不直接写原生控件或导入 Base UI。单行控件使用统一 size（sm/default/lg），同排一致；不靠页面 className 改高度、纵向内边距、字号或圆角。按钮式链接复用 buttonVariants。执行 lint 并在真实页面比较控件与弹层，检查键盘、禁用、深浅主题和手机；不得为通过检查整文件关闭 UI 规则。其他已有应用优先沿用自身设计系统。
 - 本底座默认未接 AI、文件业务和额度账本；Google/邮件/Stripe 仍需产品自己的配置和真实验收。已有应用以检查到的实际能力为准。初始化不代表这些能力已上线。新项目保留示例 CRUD，必须按需求决定替换或扩展。
 - 按项目 Checks 执行基础检查，并根据计划中的步骤执行实际业务验收。保存不含私人数据的结果/截图到项目内文件，再记录相对路径。明确区分 local、mock、real；模拟供应商不能通过真实供应商用例。初始化完成、代码已实现和必需业务验收通过是不同状态；声明业务完成前运行 `pnpm project:check --ready`。它校验记录和证据路径，不能代替实际测试。
 - 交付可用地址、实现范围、证据和缺项。若启动预览，先确认固定端口 3100；生产 smoke 使用 3110，构建与测试串行运行。

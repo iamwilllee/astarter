@@ -12,12 +12,21 @@ import {
 import { projectInput, type Project } from '@/modules/projects/validation'
 import { allowPrivateMutation } from './rate-limit.server'
 import { workspace } from './app.server'
-import { HttpError, assertOrigin, body, isLocalRequest, json } from './http.server'
+import {
+  HttpError,
+  assertOrigin,
+  body,
+  bufferRequestBody,
+  isLocalRequest,
+  json,
+} from './http.server'
 
 export async function handleApi(request: Request): Promise<Response> {
   try {
     const path = new URL(request.url).pathname
     const method = request.method
+    if (!['GET', 'HEAD'].includes(method))
+      request = await bufferRequestBody(request, path === '/api/billing/webhook' ? 262_144 : 16_384)
     if (path === '/api/health' && method === 'GET') {
       await env.DB.prepare('SELECT 1').first()
       return json({

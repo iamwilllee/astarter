@@ -55,6 +55,7 @@ function AppShell() {
   }
   return (
     <div className="min-h-screen">
+      {/* eslint-disable-next-line aster-ui/no-native-controls -- Full-screen dismissal overlay, not a standard form control. */}
       <button
         className={`fixed inset-0 z-30 bg-black/30 md:hidden ${open ? '' : 'hidden'}`}
         aria-label={t('close_navigation_overlay')}
@@ -65,13 +66,15 @@ function AppShell() {
       >
         <div className="flex h-20 items-center justify-between px-6">
           <Logo />
-          <button
+          <Button
+            variant="ghost"
+            size="icon-sm"
             className="md:hidden"
             onClick={() => setOpen(false)}
             aria-label={t('close_navigation')}
           >
             <X size={18} />
-          </button>
+          </Button>
         </div>
         <div className="mx-4 mt-3 rounded-lg border bg-background p-3">
           <div className="flex items-center gap-2.5">

@@ -13,6 +13,7 @@ import {
 import { PageHeading } from '@/components/common'
 import { useI18n } from '@/components/providers'
 import { Badge } from '@/components/ui/badge'
+import { buttonVariants } from '@/components/ui/button'
 
 export const Route = createFileRoute('/app/')({ component: Overview })
 function Overview() {
@@ -47,10 +48,7 @@ function Overview() {
         title={t('hello_name', { name: viewer.user.name })}
         description={t('a_fresh_start_turn_your_next_idea_into_something_real')}
         action={
-          <Link
-            to="/app/projects"
-            className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-xs font-medium text-primary-foreground"
-          >
+          <Link to="/app/projects" className={buttonVariants({})}>
             {t('create_a_project')}
             <ArrowUpRight size={15} />
           </Link>

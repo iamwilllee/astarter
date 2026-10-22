@@ -27,6 +27,9 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 :root {
+  --control-sm: 2rem;
+  --control-md: 2.25rem;
+  --control-lg: 2.75rem;
   --background: #f8f9f7;
   --foreground: #202722;
   --card: #fff;

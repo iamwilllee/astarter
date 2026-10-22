@@ -4,7 +4,7 @@
 
 主要服务**海外 Web / AI 工具，兼顾国内**。先验证 Cloudflare 部署与 Stripe 测试订阅；国内访问、登录和支付按具体产品适配。已有项目不强制迁移。
 
-源码仓库为 [iamwilllee/astarter](https://github.com/iamwilllee/astarter)。当前版本 **v0.1.1，本地预览版**：已实现并验证本地流程，尚未部署到 Cloudflare。Stripe 仅允许测试密钥，未完成真实测试账户的托管结账验收。
+源码仓库为 [iamwilllee/astarter](https://github.com/iamwilllee/astarter)。当前版本 **v0.1.2，本地预览版**：已实现并验证本地流程，尚未部署到 Cloudflare。Stripe 仅允许测试密钥，未完成真实测试账户的托管结账验收。
 
 ![Aster Logo](public/brand/aster-logo.svg)
 
@@ -40,6 +40,10 @@ pnpm dev
 | R2 文件、AI、消费额度账本                  | R2 仅预留 binding；功能未接入，留到 v0.2          |
 
 前端：React、TanStack Router / Query、Tailwind CSS、shadcn/ui base-nova、Base UI、Lucide。服务端：Workers、Better Auth、Drizzle、D1。没有同时引入另一套 UI、表单或全局状态框架；拖拽/动画按真实需求再引入。
+
+基础控件包含 Button、Input、Select、Textarea；单行尺寸统一为 32/36/44px，默认 36px。业务页面的原生控件、直接 Base UI 导入与共享控件尺寸覆盖由 ESLint 检查；新增控件先在 UI 层封装。具体 API、布局边界与验收要求见 [前端约定](docs/FRONTEND.md)。
+
+组件样板：[本地英文](http://127.0.0.1:3100/dev/ui) · [本地中文](http://127.0.0.1:3100/zh/dev/ui)。展示尺寸、状态与弹窗交互，仅匹配的本机开发来源开放；演示不保存业务数据，生产路径返回 404。
 
 ## 开发与检查
 

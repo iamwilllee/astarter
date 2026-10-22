@@ -1,6 +1,7 @@
 import tseslint from 'typescript-eslint'
 import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
+import asterUi from './scripts/eslint-ui.mjs'
 
 export default tseslint.config(
   {
@@ -13,12 +14,35 @@ export default tseslint.config(
       'src/routeTree.gen.ts',
       'playwright-report/**',
       'test-results/**',
+      'qa/**',
+      '.local/**',
     ],
   },
   ...tseslint.configs.recommendedTypeChecked.map((config) => ({
     ...config,
     files: ['**/*.ts', '**/*.tsx'],
   })),
+  {
+    files: ['src/**/*.tsx'],
+    ignores: ['src/components/ui/**'],
+    plugins: { 'aster-ui': asterUi },
+    rules: {
+      'aster-ui/no-native-controls': 'error',
+      'aster-ui/control-geometry': 'error',
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@base-ui/react', '@base-ui/react/*'],
+              message:
+                'Import the project UI wrapper. Base UI primitives belong in src/components/ui/.',
+            },
+          ],
+        },
+      ],
+    },
+  },
   {
     files: ['**/*.ts', '**/*.tsx'],
     languageOptions: {

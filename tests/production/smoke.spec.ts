@@ -15,12 +15,12 @@ test('built Worker renders English/Chinese SSR and isolates concurrent language 
     expect(html).not.toContain('fixture-only-not-a-real-google-secret')
   }
 })
-test('production closes both inbox routes and redirects private pages without leaking data', async ({
+test('production closes local-only pages and redirects private pages without leaking data', async ({
   request,
 }) => {
   expect((await request.get('/api/health')).status()).toBe(200)
   expect((await request.get('/api/dev/mail')).status()).toBe(404)
-  for (const path of ['/dev/inbox', '/zh/dev/inbox'])
+  for (const path of ['/dev/inbox', '/zh/dev/inbox', '/dev/ui', '/zh/dev/ui'])
     expect((await request.get(path)).status()).toBe(404)
   for (const prefix of ['', '/zh']) {
     const response = await request.get(prefix + '/app')

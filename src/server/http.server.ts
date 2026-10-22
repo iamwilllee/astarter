@@ -29,9 +29,9 @@ export function isLocalRequest(request: Request) {
     url.origin === origin.origin
   )
 }
-export async function boundedText(request: Request, maxBytes = 16_384) {
+async function boundedBytes(request: Request, maxBytes: number) {
   const reader = request.body?.getReader()
-  if (!reader) return ''
+  if (!reader) return new Uint8Array()
   let size = 0
   const chunks: Uint8Array[] = []
   try {
@@ -54,7 +54,16 @@ export async function boundedText(request: Request, maxBytes = 16_384) {
     bytes.set(chunk, offset)
     offset += chunk.byteLength
   }
-  return new TextDecoder().decode(bytes)
+  return bytes
+}
+export async function boundedText(request: Request, maxBytes = 16_384) {
+  return new TextDecoder().decode(await boundedBytes(request, maxBytes))
+}
+// Consume the incoming stream before any early response, including origin/auth errors.
+// Rebuild from exact bytes so downstream parsers and signed webhooks see the same body.
+export async function bufferRequestBody(request: Request, maxBytes = 16_384) {
+  if (!request.body) return request
+  return new Request(request, { body: await boundedBytes(request, maxBytes) })
 }
 export async function body<T extends z.ZodType>(request: Request, schema: T): Promise<z.infer<T>> {
   if (!request.headers.get('content-type')?.startsWith('application/json'))

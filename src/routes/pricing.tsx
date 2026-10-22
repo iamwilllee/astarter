@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { ArrowUpRight, Check } from 'lucide-react'
+import { buttonVariants } from '@/components/ui/button'
 import { Logo, Preferences } from '@/components/common'
 import { useI18n } from '@/components/providers'
 
@@ -56,7 +57,7 @@ function Pricing() {
               </ul>
               <Link
                 to={plan.name === 'Free' ? '/signup' : '/app/billing'}
-                className={`flex items-center justify-center gap-2 rounded-lg px-4 py-3 text-xs font-medium ${plan.name === 'Pro' ? 'bg-primary text-primary-foreground' : 'border'}`}
+                className={`${buttonVariants({ variant: plan.name === 'Pro' ? 'default' : 'outline' })} w-full`}
               >
                 {plan.name === 'Free' ? t('get_started') : t('view_test_configuration')}
                 <ArrowUpRight size={14} />

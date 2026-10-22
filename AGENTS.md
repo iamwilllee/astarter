@@ -36,6 +36,7 @@ Use the bundled `aster-new` Skill in the current project by default; explicit ta
 7. Generate migrations with `pnpm db:generate`; do not silently edit an already applied migration. Update docs/changelog for meaningful behavioral changes.
 8. English is the default; Chinese URLs use `/zh`. Keep SSR locale request-scoped, preserve locale across navigation and auth callbacks, and run `pnpm locale:check` after message changes. Never expose arbitrary provider errors.
 9. Do not commit, push, publish or rewrite history unless requested. Preserve unrelated working-tree changes.
+10. Read `docs/FRONTEND.md` before UI work. Business TSX imports controls from `src/components/ui/`; direct Base UI imports and native button/input/select/textarea elements belong in that layer. Add missing controls there first. Use shared `size` variants (sm 32px, default 36px, lg 44px) and match single-line controls in a row. Do not override control height, vertical padding, font size or radius in pages. Use `buttonVariants` for button-like links. ESLint enforces these boundaries; explain narrow exceptions inline rather than disabling rules for a file.
 
 ## Checks
 

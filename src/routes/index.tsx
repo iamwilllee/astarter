@@ -15,6 +15,7 @@ import { Logo, Preferences } from '@/components/common'
 import { useI18n } from '@/components/providers'
 import { site } from '@/config/site'
 import { Badge } from '@/components/ui/badge'
+import { buttonVariants } from '@/components/ui/button'
 
 export const Route = createFileRoute('/')({ component: Home })
 function Home() {
@@ -31,7 +32,7 @@ function Home() {
             {t('pricing')}
           </Link>
           <Preferences />
-          <Link to="/login" className="rounded-lg border bg-card px-4 py-2 text-sm font-medium">
+          <Link to="/login" className={buttonVariants({ variant: 'outline' })}>
             {t('open_workspace')} <span aria-hidden>↗</span>
           </Link>
         </div>
@@ -54,17 +55,11 @@ function Home() {
               {t('a_thoughtful_foundation_for_your_next_product_accounts_data_and_billing_pat')}
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link
-                to="/signup"
-                className="inline-flex items-center gap-3 rounded-lg bg-primary px-5 py-3 text-sm font-medium text-primary-foreground"
-              >
+              <Link to="/signup" className={buttonVariants({ size: 'lg' })}>
                 {t('create_your_workspace')}
                 <ArrowUpRight size={17} />
               </Link>
-              <Link
-                to="/app"
-                className="inline-flex items-center gap-2 rounded-lg border bg-card px-5 py-3 text-sm font-medium"
-              >
+              <Link to="/app" className={buttonVariants({ variant: 'outline', size: 'lg' })}>
                 {t('explore_workspace')}
                 <ArrowRight size={16} />
               </Link>

@@ -5,7 +5,7 @@ import type { FormEvent } from 'react'
 import { CheckCircle2, ShieldCheck, KeyRound } from 'lucide-react'
 import { PageHeading, ErrorNotice } from '@/components/common'
 import { useI18n } from '@/components/providers'
-import { Button } from '@/components/ui/button'
+import { Button, buttonVariants } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { api } from '@/lib/api'
@@ -40,7 +40,7 @@ function Settings() {
           </p>
         </div>
         <form onSubmit={submit} className="space-y-5 p-6">
-          <div className="space-y-2">
+          <div className="grid gap-2">
             <Label htmlFor="profile-name">{t('your_name')}</Label>
             <Input
               id="profile-name"
@@ -50,7 +50,7 @@ function Settings() {
               required
             />
           </div>
-          <div className="space-y-2">
+          <div className="grid gap-2">
             <Label htmlFor="profile-email">{t('email_address')}</Label>
             <Input id="profile-email" value={viewer.user.email} readOnly disabled />
             <p className="flex items-center gap-1.5 text-[11px] text-primary">
@@ -80,7 +80,7 @@ function Settings() {
             </p>
           </div>
         </div>
-        <Link to="/forgot-password" className="rounded-lg border px-3 py-2 text-xs font-medium">
+        <Link to="/forgot-password" className={buttonVariants({ variant: 'outline' })}>
           {t('reset_password')}
         </Link>
       </section>

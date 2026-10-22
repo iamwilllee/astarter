@@ -190,7 +190,7 @@ export function AuthForm({
           ) : (
             <form onSubmit={submit} className="space-y-5">
               {mode === 'signup' && (
-                <div className="space-y-2">
+                <div className="grid gap-2">
                   <Label htmlFor="name">{t('your_name')}</Label>
                   <Input
                     id="name"
@@ -203,7 +203,7 @@ export function AuthForm({
                 </div>
               )}
               {mode !== 'reset' && (
-                <div className="space-y-2">
+                <div className="grid gap-2">
                   <Label htmlFor="email">{t('email_address')}</Label>
                   <Input
                     id="email"
@@ -218,7 +218,7 @@ export function AuthForm({
                 </div>
               )}
               {mode !== 'forgot' && (
-                <div className="space-y-2">
+                <div className="grid gap-2">
                   <div className="flex items-center justify-between">
                     <Label htmlFor="password">{t('password')}</Label>
                     {mode === 'login' && (
