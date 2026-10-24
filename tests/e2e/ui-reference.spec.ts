@@ -1,5 +1,36 @@
 import { test, expect } from './fixtures'
 
+test('tabs wait for hydration before accepting the first interaction', async ({ page }) => {
+  let releaseScripts = () => {}
+  const scriptsReady = new Promise<void>((resolve) => {
+    releaseScripts = resolve
+  })
+  let blockedScripts = 0
+  await page.route('**/*', async (route) => {
+    if (route.request().resourceType() === 'script') {
+      blockedScripts += 1
+      await scriptsReady
+    }
+    await route.continue()
+  })
+  try {
+    await page.goto('/dev/ui', { waitUntil: 'commit' })
+    await expect(
+      page.getByRole('heading', { name: 'Component reference', exact: true }),
+    ).toBeVisible()
+    await expect.poll(() => blockedScripts).toBeGreaterThan(0)
+    const design = page.getByRole('tab', { name: 'Design direction', exact: true })
+    await expect(design).toBeDisabled()
+    releaseScripts()
+    await expect(design).toBeEnabled()
+    await design.click()
+    await expect(design).toHaveAttribute('aria-selected', 'true')
+    await expect(page.getByRole('heading', { name: 'Make space for a good idea.' })).toBeVisible()
+  } finally {
+    releaseScripts()
+  }
+})
+
 test('local component reference preserves size, disabled, dialog, theme and mobile contracts', async ({
   page,
 }) => {
@@ -144,7 +175,15 @@ test('page patterns cover pagination, details, search, failure recovery and mobi
   await expect(page.getByRole('heading', { name: '给好想法，留一点空间。' })).toBeVisible()
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   await page.getByRole('button', { name: 'Switch to English' }).click()
+  await expect(page).toHaveURL(/\/dev\/ui$/)
+  await expect(
+    page.getByRole('heading', { name: 'Component reference', exact: true }),
+  ).toBeVisible()
   await page.getByRole('tab', { name: 'Design direction', exact: true }).click()
+  await expect(page.getByRole('tab', { name: 'Design direction', exact: true })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  )
   await expect(page.getByRole('heading', { name: 'Make space for a good idea.' })).toBeVisible()
   expect(errors).toEqual([])
 })

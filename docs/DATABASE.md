@@ -41,6 +41,8 @@ pnpm project:database status --env staging
 
 production 使用相同命令，但必须显式写 `--env production`，重新生成正式环境自己的 release-id。数据库命令不会默认选择 production。正式部署命令仍为 `pnpm deploy`，staging 为 `pnpm run deploy --env staging`。
 
+已有产品若使用 `env.production`，数据库工具优先选择该命名环境，所有远端命令与恢复方案显式带 `--env production`；本地迁移仍使用根 DB，不将根本地库当作正式库。沿用产品自己的部署入口，不覆盖其环境布局；增量接入时把数据库只读 preflight 合并到原发布脚本。底座默认部署脚本仍采用根 production / env.staging 的布局。
+
 本地计划列出全部迁移及需注意的 SQL 标记；它不能知道远端还有哪些没执行。`check` 和 `apply` 对比实际远端历史，拒绝未知文件、顺序分歧或本地已记录执行后的 SQL 内容变化。首次接入旧库只能核对历史文件名，D1 自带迁移表没有 SQL 内容哈希，不能据此证明历史 SQL 完全一致；由 Agent 审查可信版本。已有业务表却没有迁移历史的库需要单独的基线方案，工具不自动认领。当前仅支持现有 Drizzle 的顶层编号 SQL 布局，自定义 glob/嵌套迁移需另行接入，不能静默漏文件。
 
 `check` 直接执行只读 SELECT/PRAGMA，不调用会初始化迁移表的 `wrangler d1 migrations list`。新建空库也可检查，不会因检查而建表。`quick_check` / `foreign_key_check` 不证明业务或供应商正确；大库检查、导出和迁移可能耗时、暂停服务或触及账户用量，先评估实际规模与窗口。

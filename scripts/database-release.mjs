@@ -91,7 +91,8 @@ export function databaseContext(root, environment, { local = false } = {}) {
   })
   if (errors.length || !base || typeof base !== 'object')
     fail('Invalid Wrangler JSONC configuration')
-  const config = environment === 'production' ? base : base.env?.staging
+  const production = base.env?.production ?? base
+  const config = local ? base : environment === 'production' ? production : base.env?.staging
   const bindings = config?.d1_databases?.filter((item) => item.binding === 'DB') ?? []
   const db = bindings[0]
   if (bindings.length !== 1 || !/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,62}$/.test(db?.database_name ?? ''))
@@ -99,7 +100,7 @@ export function databaseContext(root, environment, { local = false } = {}) {
   if (db.remote === true && local) fail('Local development must not use a remote DB binding')
   if (!uuid.test(db.database_id ?? '') || (!local && db.database_id.startsWith('00000000')))
     fail('Configure the selected remote D1 database_id before planning a release')
-  const other = (environment === 'production' ? base.env?.staging : base)?.d1_databases ?? []
+  const other = (environment === 'production' ? base.env?.staging : production)?.d1_databases ?? []
   if (!local && other.some((item) => item.database_id === db.database_id))
     fail('Staging and production must use different databases')
   if (db.migrations_pattern)
@@ -127,7 +128,7 @@ export function databaseContext(root, environment, { local = false } = {}) {
       return { name, hash: hash(sql), review: /\b(DROP|DELETE|UPDATE|ALTER|REPLACE)\b/i.test(sql) }
     })
     .sort((a, b) => Number(a.name.split('_')[0]) - Number(b.name.split('_')[0]))
-  const account = base.account_id ?? process.env.CLOUDFLARE_ACCOUNT_ID ?? null
+  const account = config.account_id ?? base.account_id ?? process.env.CLOUDFLARE_ACCOUNT_ID ?? null
   if (account !== null && !/^[0-9a-f]{32}$/i.test(account))
     fail('Invalid Cloudflare account identifier')
   const target = {
@@ -139,6 +140,9 @@ export function databaseContext(root, environment, { local = false } = {}) {
     table,
     migrationPath,
     migrations,
+    ...(!local && environment === 'production' && base.env?.production
+      ? { namedEnvironment: 'production' }
+      : {}),
     ...(local && db.preview_database_id ? { previewDatabaseId: db.preview_database_id } : {}),
   }
   return { enabled: true, ...target, fingerprint: fingerprint(target) }
@@ -159,7 +163,8 @@ function configFor(context, directory) {
       },
     ],
   }
-  if (context.environment === 'staging') return { env: { staging: config } }
+  const named = context.namedEnvironment ?? (context.environment === 'staging' ? 'staging' : null)
+  if (named) return { env: { [named]: config } }
   return config
 }
 function writeSnapshot(root, context, directory) {
@@ -216,7 +221,7 @@ function commandArgs(context, directory, args) {
     '--config',
     join(directory, 'wrangler.json'),
     '--env',
-    context.environment === 'staging' ? 'staging' : '',
+    context.namedEnvironment ?? (context.environment === 'staging' ? 'staging' : ''),
   ]
 }
 function resultRows(output) {

@@ -1,5 +1,6 @@
 import { Tabs as Primitive } from '@base-ui/react/tabs'
 import { cn } from 'cn'
+import { useHydrated } from '@/lib/use-hydrated'
 
 const Tabs = Primitive.Root
 
@@ -23,6 +24,7 @@ function TabsTrigger({
   className,
   ...props
 }: Omit<Primitive.Tab.Props, 'className'> & { className?: string }) {
+  const hydrated = useHydrated()
   return (
     <Primitive.Tab
       data-slot="tabs-trigger"
@@ -31,6 +33,7 @@ function TabsTrigger({
         className,
       )}
       {...props}
+      disabled={!hydrated || props.disabled}
     />
   )
 }

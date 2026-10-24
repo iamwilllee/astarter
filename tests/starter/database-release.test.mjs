@@ -76,7 +76,7 @@ function provider({
     assert.ok(!args.includes('--local'))
     const config = JSON.parse(readFileSync(args[args.indexOf('--config') + 1], 'utf8'))
     assert.ok(!JSON.stringify(config).includes('private-fixture-value'))
-    const ctx = config.env?.staging ?? config
+    const ctx = config.env?.staging ?? config.env?.production ?? config
     assert.equal(ctx.d1_databases.length, 1)
     const statement = args[args.indexOf('--command') + 1]
     const rows = statement?.includes('sqlite_master')
@@ -150,6 +150,42 @@ test('remote check is read-only, handles empty new DBs and blocks divergent hist
     }),
     /baseline/,
   )
+})
+test('named production uses its exact remote binding while local migration retains the root DB', async (t) => {
+  const root = fixture(t)
+  const config = JSON.parse(readFileSync(join(root, 'wrangler.jsonc'), 'utf8'))
+  config.env.production = { name: 'fixture-live', d1_databases: config.d1_databases }
+  config.name = 'fixture-local'
+  config.d1_databases = [
+    {
+      ...config.d1_databases[0],
+      database_name: 'fixture-local',
+      database_id: '00000000-0000-0000-0000-000000000000',
+    },
+  ]
+  put(root, 'wrangler.jsonc', config)
+  assert.equal(databaseContext(root, 'production').database, 'fixture-production')
+  assert.equal(databaseContext(root, 'production').namedEnvironment, 'production')
+  await migrateLocalDatabase(root, {
+    run: async (args) => {
+      assert.ok(args.includes('--local') && args.includes('fixture-local'))
+      assert.equal(args[args.indexOf('--env') + 1], '')
+    },
+  })
+  const plan = planDatabase(root, 'production')
+  const mock = provider()
+  await applyDatabase(root, 'production', plan.id, mock)
+  assert.ok(
+    mock.calls.every(
+      (args) =>
+        args.includes('fixture-production') && args[args.indexOf('--env') + 1] === 'production',
+    ),
+  )
+  const recovery = recoveryDatabase(root, 'production', plan.id)
+  assert.equal(recovery.points[0].command.at(-1), 'production')
+  config.env.staging.d1_databases = config.env.production.d1_databases
+  put(root, 'wrangler.jsonc', config)
+  assert.throws(() => databaseContext(root, 'staging'), /different databases/)
 })
 test('backup and bookmark precede migration, verification is current, recovery never restores', async (t) => {
   const root = fixture(t)

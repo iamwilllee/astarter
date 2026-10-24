@@ -2,6 +2,9 @@
 
 ## 0.2.0 — 2026-10-23（本地候选，未发布）
 
+- Keep tabs disabled until hydration so the first click after a locale reload is not lost. Add a delayed-script regression and retain CI HTML reports, failure screenshots and traces.
+- Support existing products with named production databases while preserving their root local database and explicit restore target; validate staging/production isolation against the actual remote environments.
+
 - Add explicit-environment D1 release plans, read-only history/integrity preflight, private export/bookmark backups, migration verification and resumable failure records. Block deploy on pending/divergent migrations; generate recovery plans without automatic destructive restore. Resolve local DB names from configuration, keep local persistence isolated, and document Agent execution and existing-product adoption.
 
 - 2026-10-24: Add explicit product capability composition across initialization, runtime routes/APIs, local setup, acceptance and deployment. Public showcase needs no DB/auth/mail, Google-only needs no email, and unused modules stay out of navigation. Preserve existing data/resources and payment obligations; add reviewed local profile changes with private backups and isolated profile acceptance.

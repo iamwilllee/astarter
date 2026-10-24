@@ -21,6 +21,8 @@ Aster 使用 React、TanStack Router / Query、Tailwind CSS、shadcn/ui base-nov
 
 新增或调整公共组件后先更新样板，再检查桌面/手机、深浅主题、键盘焦点和实际渲染尺寸。新增 Base UI 子路径时同时维护 `vite.config.ts` 中客户端/SSR 的预打包列表，验证首次路由加载与水合。
 
+Button、Input、Select、Textarea、Checkbox、Switch 和 TabsTrigger 在水合完成前保持禁用，避免首个操作或输入丢失。语言切换会重新加载页面，必须保留这层保护；测试用延迟脚本加载验证 SSR 与就绪后的行为，不靠固定等待掩盖问题。CI 失败附件包含 HTML 报告、截图与 trace，均使用隔离测试数据。
+
 ## 从产品需求确定界面
 
 先在 `PROJECT.md` 的“界面与内容”写明用户与主要操作、视觉参考或推导依据、信息密度、页面组合及品牌方向。用户已有品牌/界面时优先延续；没有参考时从场景推导，不例行追加一轮设计问卷。
