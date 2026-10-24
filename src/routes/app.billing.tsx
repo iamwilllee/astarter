@@ -1,3 +1,5 @@
+import { features } from '@/config/features'
+import { notFound } from '@tanstack/react-router'
 import { createFileRoute, getRouteApi } from '@tanstack/react-router'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { Check, CreditCard, ExternalLink, ShieldCheck } from 'lucide-react'
@@ -8,6 +10,9 @@ import { Button } from '@/components/ui/button'
 import { api } from '@/lib/api'
 
 export const Route = createFileRoute('/app/billing')({
+  beforeLoad: () => {
+    if (!features.billing) throw notFound()
+  },
   validateSearch: (search: Record<string, unknown>): { checkout?: string; canceled?: boolean } => ({
     checkout: typeof search.checkout === 'string' ? search.checkout : '',
     canceled: search.canceled === '1' || search.canceled === 1 || search.canceled === true,

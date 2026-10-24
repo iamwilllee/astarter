@@ -1,3 +1,4 @@
+import { features } from '@/config/features'
 import { createFileRoute, getRouteApi, Link } from '@tanstack/react-router'
 import {
   Database,
@@ -40,13 +41,20 @@ function Services() {
       text:
         viewer.mailMode === 'local'
           ? t('messages_are_stored_in_the_local_test_inbox_no_delivery_to_external_recipie')
-          : viewer.mailMode === 'cloudflare'
-            ? t('cf_email_configured_delivery_must_be_verified_separately')
+          : viewer.mailReady
+            ? t('mail_provider_configured_pending', {
+                provider:
+                  viewer.mailMode === 'cloudflare'
+                    ? 'Cloudflare'
+                    : viewer.mailMode === 'brevo'
+                      ? 'Brevo'
+                      : 'Resend',
+              })
             : t('production_email_is_not_configured'),
       status:
         viewer.mailMode === 'local'
           ? t('local_test')
-          : viewer.mailMode === 'cloudflare'
+          : viewer.mailReady
             ? t('not_verified')
             : t('unconfigured'),
       ready: viewer.mailMode === 'local',
@@ -79,7 +87,16 @@ function Services() {
       status: t('disabled'),
       ready: false,
     },
-  ]
+  ].filter(
+    (service) =>
+      ({
+        'Transactional email': features.mail,
+        'Google OAuth': features.google,
+        Stripe: features.billing,
+        'Cloudflare R2': features.files,
+        'Workers AI': features.ai,
+      })[service.name] ?? true,
+  )
   return (
     <>
       <PageHeading
@@ -103,7 +120,7 @@ function Services() {
           </section>
         ))}
       </div>
-      {viewer.local && (
+      {viewer.local && features.mail && features.database && (
         <Link to="/dev/inbox" className="mt-6 inline-flex items-center gap-2 text-xs text-primary">
           {t('open_local_test_inbox')}
           <ArrowUpRight size={14} />

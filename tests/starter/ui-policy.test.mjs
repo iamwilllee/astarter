@@ -22,6 +22,7 @@ tester.run('control-geometry', ui.rules['control-geometry'], {
     `${from}<Action className={cn("w-full", compact && "max-w-xs")} />`,
     `${from}<Action className="text-primary [&_svg]:size-4" />`,
     `${from}<Action style={{ width: "100%" }} />`,
+    'import { TabsTrigger } from "@/components/ui/tabs"; <TabsTrigger className="w-full" />',
   ],
   invalid: [
     '<Action className="h-12" />',
@@ -31,5 +32,20 @@ tester.run('control-geometry', ui.rules['control-geometry'], {
     '<Action className={unknownClasses} />',
     '<Action style={{ height: 50 }} />',
     '<Action style={unknownStyles} />',
-  ].map((code) => ({ code: from + code, errors: [{ messageId: 'geometry' }] })),
+  ]
+    .map((code) => ({ code: from + code, errors: [{ messageId: 'geometry' }] }))
+    .concat([
+      {
+        code: 'import { TabsTrigger as Tab } from "@/components/ui/tabs"; <Tab className="h-16" />',
+        errors: [{ messageId: 'geometry' }],
+      },
+      {
+        code: 'import { Switch } from "@/components/ui/switch"; <Switch style={{ borderRadius: 0 }} />',
+        errors: [{ messageId: 'geometry' }],
+      },
+      {
+        code: 'import { Checkbox } from "@/components/ui/checkbox"; <Checkbox className="rounded-full" />',
+        errors: [{ messageId: 'geometry' }],
+      },
+    ]),
 })

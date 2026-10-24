@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute, Link, getRouteApi } from '@tanstack/react-router'
 import {
   ArrowUpRight,
   ArrowRight,
@@ -20,21 +20,26 @@ import { buttonVariants } from '@/components/ui/button'
 export const Route = createFileRoute('/')({ component: Home })
 function Home() {
   const { t } = useI18n()
+  const { registrationReady, features } = getRouteApi('__root__').useLoaderData()
   return (
     <div className="min-h-screen">
       <header className="mx-auto flex max-w-6xl items-center justify-between px-5 py-6 sm:px-8">
         <Logo />
         <div className="flex items-center gap-4">
-          <Link
-            to="/pricing"
-            className="hidden text-sm text-muted-foreground hover:text-foreground sm:block"
-          >
-            {t('pricing')}
-          </Link>
+          {features.billing && (
+            <Link
+              to="/pricing"
+              className="hidden text-sm text-muted-foreground hover:text-foreground sm:block"
+            >
+              {t('pricing')}
+            </Link>
+          )}
           <Preferences />
-          <Link to="/login" className={buttonVariants({ variant: 'outline' })}>
-            {t('open_workspace')} <span aria-hidden>↗</span>
-          </Link>
+          {features.auth && (
+            <Link to="/login" className={buttonVariants({ variant: 'outline' })}>
+              {t('open_workspace')} <span aria-hidden>↗</span>
+            </Link>
+          )}
         </div>
       </header>
       <main>
@@ -52,18 +57,23 @@ function Home() {
               <span className="text-primary">{t('more_possibility')}</span>
             </h1>
             <p className="mt-6 max-w-md text-base leading-8 text-muted-foreground">
-              {t('a_thoughtful_foundation_for_your_next_product_accounts_data_and_billing_pat')}
+              {t('selected_product_foundation')}
             </p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link to="/signup" className={buttonVariants({ size: 'lg' })}>
-                {t('create_your_workspace')}
-                <ArrowUpRight size={17} />
-              </Link>
-              <Link to="/app" className={buttonVariants({ variant: 'outline', size: 'lg' })}>
-                {t('explore_workspace')}
-                <ArrowRight size={16} />
-              </Link>
-            </div>
+            {features.auth && (
+              <div className="mt-8 flex flex-wrap gap-3">
+                <Link
+                  to={registrationReady ? '/signup' : '/login'}
+                  className={buttonVariants({ size: 'lg' })}
+                >
+                  {registrationReady ? t('create_your_workspace') : t('go_to_sign_in')}
+                  <ArrowUpRight size={17} />
+                </Link>
+                <Link to="/app" className={buttonVariants({ variant: 'outline', size: 'lg' })}>
+                  {t('explore_workspace')}
+                  <ArrowRight size={16} />
+                </Link>
+              </div>
+            )}
             <div className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-xs text-muted-foreground">
               {[
                 t('mit_licensed'),
@@ -78,12 +88,12 @@ function Home() {
             </div>
           </div>
           <div className="relative pb-5">
-            <div className="absolute -inset-5 -z-10 rounded-full bg-[#e5ecdf] blur-3xl dark:bg-[#293e2e]" />
-            <div className="overflow-hidden rounded-xl border bg-card shadow-[0_18px_65px_-30px_#213d2a40]">
+            <div className="absolute -inset-5 -z-10 rounded-full bg-accent blur-3xl" />
+            <div className="overflow-hidden rounded-xl border bg-card shadow-xl shadow-primary/10">
               <div className="flex items-center justify-between border-b px-4 py-3">
                 <div className="flex gap-1.5">
-                  {['#d9dfd5', '#d9dfd5', '#d9dfd5'].map((c, i) => (
-                    <span key={i} className="size-2 rounded-full" style={{ background: c }} />
+                  {[0, 1, 2].map((i) => (
+                    <span key={i} className="size-2 rounded-full bg-border" />
                   ))}
                 </div>
                 <span className="font-mono text-[10px] text-muted-foreground">
@@ -125,8 +135,8 @@ function Home() {
                     },
                     {
                       icon: Database,
-                      title: 'D1 + R2',
-                      desc: 'SQL data · Private storage',
+                      title: 'Cloudflare D1',
+                      desc: 'SQL data · Per-user access',
                       tag: 'DATA',
                     },
                     {
@@ -135,21 +145,30 @@ function Home() {
                       desc: 'Sessions · Email verification',
                       tag: 'IDENTITY',
                     },
-                  ].map(({ icon: Icon, title, desc, tag }) => (
-                    <div
-                      key={title}
-                      className="flex items-center gap-3 rounded-lg border bg-background/60 p-3"
-                    >
-                      <span className="grid size-9 shrink-0 place-items-center rounded-md bg-card text-primary">
-                        <Icon size={18} />
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs font-medium">{title}</p>
-                        <p className="mt-1 text-[10px] text-muted-foreground">{desc}</p>
+                  ]
+                    .filter(
+                      (item) =>
+                        (item.tag !== 'DATA' && item.tag !== 'IDENTITY') ||
+                        (item.tag === 'DATA' && features.database) ||
+                        (item.tag === 'IDENTITY' && features.auth),
+                    )
+                    .map(({ icon: Icon, title, desc, tag }) => (
+                      <div
+                        key={title}
+                        className="flex items-center gap-3 rounded-lg border bg-background/60 p-3"
+                      >
+                        <span className="grid size-9 shrink-0 place-items-center rounded-md bg-card text-primary">
+                          <Icon size={18} />
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-medium">{title}</p>
+                          <p className="mt-1 text-[10px] text-muted-foreground">{desc}</p>
+                        </div>
+                        <span className="text-[9px] tracking-wider text-muted-foreground">
+                          {tag}
+                        </span>
                       </div>
-                      <span className="text-[9px] tracking-wider text-muted-foreground">{tag}</span>
-                    </div>
-                  ))}
+                    ))}
                 </div>
               </div>
               <div className="flex items-center gap-2 border-t bg-muted/40 px-5 py-3 font-mono text-[10px] text-muted-foreground">
@@ -167,7 +186,7 @@ function Home() {
               {
                 n: '01',
                 title: t('get_the_foundations_right'),
-                body: t('real_sessions_persistent_data_and_server_side_authorization'),
+                body: t('selected_modules_description'),
               },
               {
                 n: '02',

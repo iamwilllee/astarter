@@ -2,6 +2,7 @@ import * as React from 'react'
 import { Input as InputPrimitive } from '@base-ui/react/input'
 import { cn } from 'cn'
 import { controlVariants, type ControlSize } from './control'
+import { useHydrated } from '@/lib/use-hydrated'
 
 type InputProps = Omit<React.ComponentProps<'input'>, 'size'> & {
   size?: ControlSize
@@ -9,6 +10,7 @@ type InputProps = Omit<React.ComponentProps<'input'>, 'size'> & {
 }
 
 function Input({ className, type, size = 'default', htmlSize, ...props }: InputProps) {
+  const hydrated = useHydrated()
   return (
     <InputPrimitive
       type={type}
@@ -21,6 +23,7 @@ function Input({ className, type, size = 'default', htmlSize, ...props }: InputP
         className,
       )}
       {...props}
+      disabled={!hydrated || props.disabled}
     />
   )
 }

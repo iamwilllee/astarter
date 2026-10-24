@@ -1,3 +1,5 @@
+import { features } from '@/config/features'
+import { notFound } from '@tanstack/react-router'
 import { createFileRoute, Link, Outlet, redirect, useRouter } from '@tanstack/react-router'
 import { useQueryClient } from '@tanstack/react-query'
 import {
@@ -21,6 +23,9 @@ import { Button } from '@/components/ui/button'
 import { useI18n } from '@/components/providers'
 
 export const Route = createFileRoute('/app')({
+  beforeLoad: () => {
+    if (!features.auth) throw notFound()
+  },
   loader: async () => {
     const viewer = await getWorkspace()
     if (!viewer) throw redirect({ to: '/login' })
@@ -37,8 +42,12 @@ function AppShell() {
   const cache = useQueryClient()
   const navigation = [
     { to: '/app' as const, icon: LayoutDashboard, label: t('overview'), exact: true },
-    { to: '/app/projects' as const, icon: FolderKanban, label: t('projects_2') },
-    { to: '/app/billing' as const, icon: CreditCard, label: t('billing') },
+    ...(features.projects
+      ? [{ to: '/app/projects' as const, icon: FolderKanban, label: t('projects_2') }]
+      : []),
+    ...(features.billing
+      ? [{ to: '/app/billing' as const, icon: CreditCard, label: t('billing') }]
+      : []),
     { to: '/app/services' as const, icon: Server, label: t('services') },
     { to: '/app/settings' as const, icon: Settings, label: t('settings') },
   ]
@@ -78,7 +87,7 @@ function AppShell() {
         </div>
         <div className="mx-4 mt-3 rounded-lg border bg-background p-3">
           <div className="flex items-center gap-2.5">
-            <span className="grid size-8 place-items-center rounded-lg bg-[#e5eddd] font-medium text-[#45623b]">
+            <span className="grid size-8 place-items-center rounded-lg bg-accent font-medium text-primary">
               {viewer.user.name.slice(0, 1).toUpperCase()}
             </span>
             <div className="min-w-0">
@@ -119,7 +128,7 @@ function AppShell() {
           )}
         </nav>
         <div className="mt-auto px-4 pb-5">
-          {viewer.local && (
+          {viewer.local && features.mail && (
             <Link
               to="/dev/inbox"
               className="mb-4 flex items-center justify-between rounded-lg border border-dashed p-3 text-xs text-muted-foreground"
@@ -131,31 +140,41 @@ function AppShell() {
               <ArrowUpRight size={13} />
             </Link>
           )}
-          <div className="rounded-lg bg-background px-3 py-3">
-            <div className="flex items-center justify-between text-xs">
-              <span className="font-semibold">
-                {viewer.billing.plan === 'pro' ? 'Pro' : 'Free'} {t('plan')}
-              </span>
-              <span className="text-muted-foreground">
-                {viewer.projectCount} / {viewer.billing.projectLimit}
-              </span>
+          {features.projects && (
+            <div className="rounded-lg bg-background px-3 py-3">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-semibold">
+                  {features.billing ? (
+                    <>
+                      {viewer.billing.plan === 'pro' ? 'Pro' : 'Free'} {t('plan')}
+                    </>
+                  ) : (
+                    t('projects_2')
+                  )}
+                </span>
+                <span className="text-muted-foreground">
+                  {viewer.projectCount} / {viewer.billing.projectLimit}
+                </span>
+              </div>
+              <div className="mt-2 h-1 overflow-hidden rounded-full bg-border">
+                <div
+                  className="h-full bg-primary"
+                  style={{
+                    width: `${Math.min(100, (viewer.projectCount / viewer.billing.projectLimit) * 100)}%`,
+                  }}
+                />
+              </div>
+              {features.billing && (
+                <Link
+                  to="/app/billing"
+                  className="mt-3 flex items-center justify-between text-[11px] text-primary"
+                >
+                  {t('manage_plan')}
+                  <ArrowRightIcon />
+                </Link>
+              )}
             </div>
-            <div className="mt-2 h-1 overflow-hidden rounded-full bg-border">
-              <div
-                className="h-full bg-primary"
-                style={{
-                  width: `${Math.min(100, (viewer.projectCount / viewer.billing.projectLimit) * 100)}%`,
-                }}
-              />
-            </div>
-            <Link
-              to="/app/billing"
-              className="mt-3 flex items-center justify-between text-[11px] text-primary"
-            >
-              {t('manage_plan')}
-              <ArrowRightIcon />
-            </Link>
-          </div>
+          )}
         </div>
       </aside>
       <div className="md:pl-60">

@@ -1,3 +1,4 @@
+import { features } from '@/config/features'
 import { createFileRoute, Link, getRouteApi } from '@tanstack/react-router'
 import {
   ArrowUpRight,
@@ -14,6 +15,7 @@ import { PageHeading } from '@/components/common'
 import { useI18n } from '@/components/providers'
 import { Badge } from '@/components/ui/badge'
 import { buttonVariants } from '@/components/ui/button'
+import { site } from '@/config/site'
 
 export const Route = createFileRoute('/app/')({ component: Overview })
 function Overview() {
@@ -40,7 +42,12 @@ function Overview() {
         ? t('stripe_test_mode')
         : t('payments_unconfigured_no_charges'),
     },
-  ]
+  ].filter(
+    (card) =>
+      (card.icon !== FolderKanban && card.icon !== CreditCard) ||
+      (card.icon === FolderKanban && features.projects) ||
+      (card.icon === CreditCard && features.billing),
+  )
   return (
     <>
       <PageHeading
@@ -48,10 +55,12 @@ function Overview() {
         title={t('hello_name', { name: viewer.user.name })}
         description={t('a_fresh_start_turn_your_next_idea_into_something_real')}
         action={
-          <Link to="/app/projects" className={buttonVariants({})}>
-            {t('create_a_project')}
-            <ArrowUpRight size={15} />
-          </Link>
+          features.projects ? (
+            <Link to="/app/projects" className={buttonVariants({})}>
+              {t('create_a_project')}
+              <ArrowUpRight size={15} />
+            </Link>
+          ) : undefined
         }
       />
       <div className="grid gap-4 sm:grid-cols-3">
@@ -66,37 +75,39 @@ function Overview() {
           </section>
         ))}
       </div>
-      <section className="my-6 grid overflow-hidden rounded-xl border bg-[#eaf0e3] dark:bg-[#263b2b] sm:grid-cols-[1.4fr_1fr]">
-        <div className="p-6 sm:p-8">
-          <p className="mb-4 flex items-center gap-2 text-[10px] font-semibold tracking-widest text-primary">
-            <Sparkles size={14} />
-            MAKE SOMETHING YOURS
-          </p>
-          <h2 className="text-xl leading-snug font-semibold tracking-tight">
-            {t('start_with_one_small_project')}
-            <br />
-            {t('make_room_for_what_comes_next')}
-          </h2>
-          <p className="mb-6 mt-3 max-w-sm text-xs leading-6 text-muted-foreground">
-            {t('create_and_save_your_first_project_your_records_are_private_to_your_account')}
-          </p>
-          <Link
-            to="/app/projects"
-            className="inline-flex items-center gap-2 text-xs font-semibold text-primary"
-          >
-            {t('explore_your_projects')}
-            <ArrowRight size={14} />
-          </Link>
-        </div>
-        <div className="relative hidden items-center justify-center border-l border-black/5 sm:flex">
-          <div className="absolute size-40 rounded-full border border-primary/10" />
-          <div className="absolute size-56 rounded-full border border-primary/10" />
-          <div className="relative rotate-[-8deg] rounded-xl border border-primary/15 bg-card px-7 py-8 shadow-lg shadow-primary/5">
-            <FileCode2 className="mb-4 size-9 text-primary" strokeWidth={1.3} />
-            <p className="font-mono text-[10px] text-muted-foreground">your-next-idea.tsx</p>
+      {features.projects && (
+        <section className="my-6 grid overflow-hidden rounded-xl border bg-accent sm:grid-cols-[1.4fr_1fr]">
+          <div className="p-6 sm:p-8">
+            <p className="mb-4 flex items-center gap-2 text-[10px] font-semibold tracking-widest text-primary">
+              <Sparkles size={14} />
+              MAKE SOMETHING YOURS
+            </p>
+            <h2 className="text-xl leading-snug font-semibold tracking-tight">
+              {t('start_with_one_small_project')}
+              <br />
+              {t('make_room_for_what_comes_next')}
+            </h2>
+            <p className="mb-6 mt-3 max-w-sm text-xs leading-6 text-muted-foreground">
+              {t('create_and_save_your_first_project_your_records_are_private_to_your_account')}
+            </p>
+            <Link
+              to="/app/projects"
+              className="inline-flex items-center gap-2 text-xs font-semibold text-primary"
+            >
+              {t('explore_your_projects')}
+              <ArrowRight size={14} />
+            </Link>
           </div>
-        </div>
-      </section>
+          <div className="relative hidden items-center justify-center border-l border-black/5 sm:flex">
+            <div className="absolute size-40 rounded-full border border-primary/10" />
+            <div className="absolute size-56 rounded-full border border-primary/10" />
+            <div className="relative rotate-[-8deg] rounded-xl border border-primary/15 bg-card px-7 py-8 shadow-lg shadow-primary/5">
+              <FileCode2 className="mb-4 size-9 text-primary" strokeWidth={1.3} />
+              <p className="font-mono text-[10px] text-muted-foreground">your-next-idea.tsx</p>
+            </div>
+          </div>
+        </section>
+      )}
       <div className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
         <section className="rounded-xl border bg-card">
           <div className="flex items-center justify-between border-b px-5 py-4">
@@ -125,20 +136,22 @@ function Overview() {
                 text: t('try_editing_and_filtering_your_projects'),
                 to: '/app/projects' as const,
               },
-            ].map(({ complete, title, text, to }) => (
-              <Link key={title} to={to} className="flex items-center gap-3 py-4">
-                {complete ? (
-                  <CheckCircle2 size={17} className="shrink-0 text-primary" />
-                ) : (
-                  <Circle size={17} className="shrink-0 text-muted-foreground" />
-                )}
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-medium">{title}</p>
-                  <p className="mt-1 truncate text-[11px] text-muted-foreground">{text}</p>
-                </div>
-                <ArrowUpRight size={14} className="text-muted-foreground" />
-              </Link>
-            ))}
+            ]
+              .filter((item) => item.to !== '/app/projects' || features.projects)
+              .map(({ complete, title, text, to }) => (
+                <Link key={title} to={to} className="flex items-center gap-3 py-4">
+                  {complete ? (
+                    <CheckCircle2 size={17} className="shrink-0 text-primary" />
+                  ) : (
+                    <Circle size={17} className="shrink-0 text-muted-foreground" />
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-medium">{title}</p>
+                    <p className="mt-1 truncate text-[11px] text-muted-foreground">{text}</p>
+                  </div>
+                  <ArrowUpRight size={14} className="text-muted-foreground" />
+                </Link>
+              ))}
           </div>
         </section>
         <section className="rounded-xl border bg-card p-6">
@@ -161,7 +174,7 @@ function Overview() {
         </section>
       </div>
       <p className="mt-8 text-[10px] text-muted-foreground">
-        STARTER / V0.1.0 <span className="mx-2">·</span>{' '}
+        {site.name} / v{site.version} <span className="mx-2">·</span>{' '}
         {t('projects_and_plan_data_reflect_your_current_account')}
       </p>
     </>

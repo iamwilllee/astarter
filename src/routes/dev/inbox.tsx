@@ -1,3 +1,4 @@
+import { features } from '@/config/features'
 import { createFileRoute, Link, notFound } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { Mail, ArrowUpRight, ArrowLeft, RefreshCw } from 'lucide-react'
@@ -16,7 +17,7 @@ interface MailRow {
 }
 export const Route = createFileRoute('/dev/inbox')({
   loader: async () => {
-    if (!(await getAuthInfo()).local) throw notFound()
+    if (!features.mail || !features.database || !(await getAuthInfo()).local) throw notFound()
   },
   component: Inbox,
 })

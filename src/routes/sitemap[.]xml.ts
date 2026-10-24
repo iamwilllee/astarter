@@ -1,3 +1,4 @@
+import { features } from '@/config/features'
 import { createFileRoute } from '@tanstack/react-router'
 import { env } from 'cloudflare:workers'
 import { localizePath } from '@/i18n/core'
@@ -8,7 +9,7 @@ export const Route = createFileRoute('/sitemap.xml')({
         const origin = new URL(env.APP_ORIGIN).origin
         const entries =
           String(env.PUBLIC_INDEXABLE) === 'true'
-            ? ['/', '/pricing']
+            ? ['/', ...(features.billing ? ['/pricing'] : [])]
                 .flatMap((path) =>
                   (['en', 'zh'] as const).map(
                     (locale) => `<url><loc>${origin}${localizePath(path, locale)}</loc></url>`,

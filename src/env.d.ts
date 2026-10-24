@@ -7,5 +7,7 @@ declare namespace Cloudflare {
     STRIPE_SECRET_KEY?: string
     STRIPE_WEBHOOK_SECRET?: string
     STRIPE_PRICE_ID?: string
+    BREVO_API_KEY?: string
+    RESEND_API_KEY?: string
   }
 }

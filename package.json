@@ -1,6 +1,6 @@
 {
   "name": "aster",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "license": "MIT",
@@ -20,7 +20,7 @@
     "format:check": "prettier --check .",
     "cf:typegen": "wrangler types",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "wrangler d1 migrations apply starter-db --local",
+    "db:migrate": "node scripts/project-database.mjs local",
     "setup": "node scripts/setup.mjs",
     "check": "pnpm project:check --if-present && pnpm locale:check && pnpm build && pnpm lint && pnpm typecheck && pnpm test && pnpm test:starter",
     "admin:grant": "node scripts/admin.mjs grant",
@@ -36,7 +36,11 @@
     "project:status": "node scripts/project.mjs status",
     "project:check": "node scripts/project.mjs check",
     "project:resume": "node scripts/project-resume.mjs",
-    "aster:new": "node skills/aster-new/scripts/create-project.mjs"
+    "project:upgrade": "node scripts/project-upgrade.mjs",
+    "aster:new": "node skills/aster-new/scripts/create-project.mjs",
+    "project:service": "node scripts/project-service.mjs",
+    "project:modules": "node scripts/project-modules.mjs",
+    "project:database": "node scripts/project-database.mjs"
   },
   "dependencies": {
     "@base-ui/react": "1.9.0",

@@ -1,3 +1,4 @@
+import { readFeatures } from './project-features.mjs'
 import { createHash } from 'node:crypto'
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
@@ -29,7 +30,7 @@ export function localBootstrapEnv() {
   const env = { ...process.env }
   for (const key of Object.keys(env))
     if (
-      /^(?:CLOUDFLARE_|CF_|GOOGLE_|STRIPE_)/.test(key) ||
+      /^(?:CLOUDFLARE_|CF_|GOOGLE_|STRIPE_|BREVO_|RESEND_)/.test(key) ||
       ['BETTER_AUTH_SECRET', 'ENVIRONMENT', 'APP_ORIGIN', 'MAIL_MODE', 'BILLING_ENABLED'].includes(
         key,
       )
@@ -58,6 +59,7 @@ export function assertLocalProject(root) {
   if (state.schemaVersion !== 1) throw new Error('不支持的流程版本')
   if (!existsSync(join(root, '.dev.vars')))
     throw new Error('缺少 .dev.vars；先恢复本产品本地配置，不自动重置密钥')
+  const { features } = readFeatures(root)
   const vars = parseLocalVars(readFileSync(join(root, '.dev.vars'), 'utf8'))
   let origin
   try {
@@ -67,7 +69,7 @@ export function assertLocalProject(root) {
   }
   if (
     vars.ENVIRONMENT !== 'local' ||
-    vars.MAIL_MODE !== 'local' ||
+    vars.MAIL_MODE !== (features.mail && features.database ? 'local' : 'disabled') ||
     !origin ||
     !['http:', 'https:'].includes(origin.protocol) ||
     !['127.0.0.1', 'localhost', '[::1]'].includes(origin.hostname) ||
@@ -75,9 +77,10 @@ export function assertLocalProject(root) {
   )
     throw new Error('恢复命令仅用于匹配的本机 local 配置；不会操作远端环境')
   if (
-    !vars.BETTER_AUTH_SECRET ||
-    vars.BETTER_AUTH_SECRET.length < 32 ||
-    vars.BETTER_AUTH_SECRET.startsWith('replace-')
+    features.auth &&
+    (!vars.BETTER_AUTH_SECRET ||
+      vars.BETTER_AUTH_SECRET.length < 32 ||
+      vars.BETTER_AUTH_SECRET.startsWith('replace-'))
   )
     throw new Error('本地认证密钥缺失或无效；先恢复本产品配置，不自动重置')
 }

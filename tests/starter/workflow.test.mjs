@@ -1,3 +1,4 @@
+import { featurePreset } from '../../src/config/feature-policy.mjs'
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
@@ -15,6 +16,7 @@ import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { spawnSync } from 'node:child_process'
+import { parse as parseJsonc } from 'jsonc-parser'
 import { createProject } from '../../skills/aster-new/scripts/create-project.mjs'
 import {
   initialPlan,
@@ -24,6 +26,7 @@ import {
   planProblems,
   resumeProject,
   projectStatus,
+  cloudCostDecisionId,
 } from '../../scripts/project-workflow.mjs'
 import { doctor } from '../../scripts/project-doctor.mjs'
 import { parseLocalVars } from '../../scripts/project-local.mjs'
@@ -46,6 +49,7 @@ function fakeDependencies(root) {
   }
 }
 function completePlan(root) {
+  writeFileSync(join(root, 'src/config/features.json'), JSON.stringify(featurePreset('showcase')))
   const plan = initialPlan('私人笔记')
   plan.coreFlow = ['创建笔记', '刷新后读取']
   for (const choice of Object.values(plan.modules))
@@ -81,6 +85,14 @@ test('natural-language brief stays user intent; choices have provenance and are 
     b = initialPlan('第二个项目')
   assert.equal(a.modules.billing.selection, 'undecided')
   assert.equal(a.modules.ai.selection, 'undecided')
+  assert.equal(a.modules.google.selection, 'deferred')
+  assert.equal(a.modules.google.basis, 'default')
+  assert.equal(
+    initialPlan('Google 登录', {
+      modules: { google: { selection: 'required', basis: 'user', reason: '明确选择 Google' } },
+    }).modules.google.selection,
+    'required',
+  )
   a.modules.ai.selection = 'required'
   assert.equal(b.modules.ai.selection, 'undecided')
   a.handoff.next.push('only project A')
@@ -128,6 +140,54 @@ test('initialization never inherits completed tasks or passed acceptance from a 
   assert.equal(plan.tasks[0].status, 'todo')
   assert.equal(plan.acceptance[0].status, 'pending')
   assert.deepEqual(plan.acceptance[0].evidence, [])
+})
+
+test('cloud cost defaults stay a preference, preserve user budgets and do not break older plans', async (t) => {
+  const root = product(t)
+  const plan = loadPlan(root)
+  const cost = plan.decisions.find((decision) => decision.id === cloudCostDecisionId)
+  assert.equal(cost.basis, 'default')
+  assert.equal(cost.blocking, false)
+  assert.equal(projectStatus(root).cloudCostPolicy.value, cost.value)
+  const config = parseJsonc(readFileSync(join(root, 'wrangler.jsonc'), 'utf8'))
+  assert.equal(config.r2_buckets, undefined)
+  assert.equal(config.send_email, undefined)
+  assert.equal(config.vars.MAIL_MODE, 'disabled')
+  assert.equal(config.vars.BILLING_ENABLED, 'false')
+
+  const preference = {
+    id: cloudCostDecisionId,
+    question: '云成本预算',
+    status: 'resolved',
+    value: '复用已有套餐；新增月预算 USD 12；只准备方案',
+    basis: 'user',
+    reason: '用户明确给出的预算，不代表购买授权',
+    blocking: false,
+  }
+  const input = join(dirname(root), 'budget-plan.json')
+  writeFileSync(input, JSON.stringify({ decisions: [preference] }))
+  const target = createProject({
+    source,
+    target: join(dirname(root), 'budgeted'),
+    plan: input,
+    install: false,
+  }).target
+  assert.deepEqual(loadPlan(target).decisions, [preference])
+  assert.ok(readFileSync(join(target, 'PROJECT.md'), 'utf8').includes(preference.value))
+  const budgetedConfig = parseJsonc(readFileSync(join(target, 'wrangler.jsonc'), 'utf8'))
+  assert.equal(budgetedConfig.send_email, undefined)
+  assert.equal(budgetedConfig.vars.BILLING_ENABLED, 'false')
+
+  const legacy = completePlan(root)
+  legacy.decisions = []
+  savePlan(root, legacy)
+  assert.equal(projectStatus(root).cloudCostPolicy, null)
+  assert.equal(projectStatus(root).businessVerified, true)
+  fakeDependencies(root)
+  const report = await doctor(root)
+  assert.equal(report.checks.find((check) => check.id === 'cloud-cost-policy').status, 'warn')
+  assert.equal(report.ok, true)
+  assert.deepEqual(loadPlan(root).decisions, [])
 })
 
 test('plan input fills human handoff while retaining provenance and pending business state', (t) => {
@@ -290,7 +350,7 @@ test('doctor redacts credentials and port occupancy is a warning, not permission
     'GOOGLE_AUTH_ENABLED=true',
   )
   vars +=
-    'GOOGLE_CLIENT_ID=private-client-fixture\nGOOGLE_CLIENT_SECRET=private-secret-fixture\nSTRIPE_SECRET_KEY=sk_live_private-fixture\n'
+    'GOOGLE_CLIENT_ID=private-client-fixture\nGOOGLE_CLIENT_SECRET=private-secret-fixture\nSTRIPE_SECRET_KEY=sk_live_private-fixture\nBREVO_API_KEY=private-brevo-fixture\nRESEND_API_KEY=private-resend-fixture\n'
   writeFileSync(join(root, '.dev.vars'), vars)
   const report = await doctor(root, { pnpmVersion: '12.11.2', portProbe: async () => 'occupied' })
   const output = JSON.stringify(report)
@@ -298,6 +358,8 @@ test('doctor redacts credentials and port occupancy is a warning, not permission
     'private-client-fixture',
     'private-secret-fixture',
     'sk_live_private-fixture',
+    'private-brevo-fixture',
+    'private-resend-fixture',
   ])
     assert.ok(!output.includes(secret))
   assert.equal(report.checks.find((item) => item.id === 'stripe').status, 'error')

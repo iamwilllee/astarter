@@ -1,3 +1,5 @@
+import { features } from '@/config/features'
+import { database } from '@/server/database.server'
 import { betterAuth } from 'better-auth/minimal'
 import { drizzleAdapter } from '@better-auth/drizzle-adapter'
 import { drizzle } from 'drizzle-orm/d1'
@@ -9,6 +11,7 @@ import { sendAuthMail } from '@/modules/mail/mail.server'
 import { HttpError, isLocalRequest } from '@/server/http.server'
 
 export function createAuth(request: Request) {
+  if (!features.auth) throw new HttpError(404, '接口不存在')
   if (!env.BETTER_AUTH_SECRET || env.BETTER_AUTH_SECRET.length < 32)
     throw new Error('BETTER_AUTH_SECRET must contain at least 32 characters')
   return betterAuth({
@@ -19,13 +22,13 @@ export function createAuth(request: Request) {
     socialProviders: googleAuthStatus().ready
       ? { google: { clientId: env.GOOGLE_CLIENT_ID!, clientSecret: env.GOOGLE_CLIENT_SECRET! } }
       : {},
-    database: drizzleAdapter(drizzle(env.DB, { schema }), {
+    database: drizzleAdapter(drizzle(database(), { schema }), {
       provider: 'sqlite',
       schema,
       transaction: false,
     }),
     emailAndPassword: {
-      enabled: true,
+      enabled: features.emailPassword,
       minPasswordLength: 12,
       maxPasswordLength: 128,
       requireEmailVerification: true,
@@ -65,7 +68,8 @@ export async function requireUser(request: Request) {
   return session.user
 }
 export async function isAdmin(userId: string) {
-  return !!(await env.DB.prepare('SELECT user_id FROM admin_user WHERE user_id = ?')
+  return !!(await database()
+    .prepare('SELECT user_id FROM admin_user WHERE user_id = ?')
     .bind(userId)
     .first())
 }

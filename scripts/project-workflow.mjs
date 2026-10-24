@@ -9,6 +9,11 @@ import {
 import { isAbsolute, join, relative, resolve } from 'node:path'
 import { spawnSync } from 'node:child_process'
 import { z } from 'zod'
+import { integrationSchema, serviceStatus, serviceProblems } from './service-workflow.mjs'
+import { featurePlanProblems, activeItem } from './project-features.mjs'
+import { featureKeys, featureDependencies } from '../src/config/feature-policy.mjs'
+import { upgradeStatus } from './project-upgrade.mjs'
+import { databaseStatus } from './database-release.mjs'
 import {
   assertLocalProject,
   dependenciesPresent,
@@ -17,14 +22,33 @@ import {
 } from './project-local.mjs'
 
 export const planFile = 'starter.project.json'
+export const cloudCostDecisionId = 'cloud-cost-policy'
 export const moduleCatalog = {
-  auth: { capability: '邮箱认证已实现；云端邮件另行配置', needs: [] },
-  mail: { capability: '本地邮件已实现；CF 发信待真实投递验收', needs: [] },
-  google: { capability: 'OAuth 已接线；需产品自己的凭据与回调验收', needs: ['auth'] },
-  billing: { capability: '仅 Stripe 测试；托管结账待真实测试账户验收', needs: ['auth'] },
-  ai: { capability: '模型调用与业务尚未实现', needs: [] },
-  files: { capability: '私有文件业务尚未实现；需补 R2 与权限/配额', needs: [] },
-  usage: { capability: '消费额度账本尚未实现', needs: [] },
+  database: { capability: 'D1 数据库；公开展示站可不接入', needs: featureDependencies.database },
+  projects: { capability: '私有项目示例；可按业务选用', needs: featureDependencies.projects },
+  emailPassword: {
+    capability: '邮箱密码认证；需邮件验证',
+    needs: featureDependencies.emailPassword,
+  },
+  auth: { capability: '认证基础；选择邮箱密码或 Google', needs: featureDependencies.auth },
+  mail: {
+    capability: '本地及 CF/Brevo/Resend 适配已实现；真实投递按产品验收',
+    needs: featureDependencies.mail,
+  },
+  google: {
+    capability: 'OAuth 已接线；需产品自己的凭据与回调验收',
+    needs: featureDependencies.google,
+  },
+  billing: {
+    capability: '仅 Stripe 测试；托管结账待真实测试账户验收',
+    needs: featureDependencies.billing,
+  },
+  ai: { capability: '模型调用与业务尚未实现', needs: featureDependencies.ai },
+  files: {
+    capability: '私有文件业务尚未实现；需补 R2 与权限/配额',
+    needs: featureDependencies.files,
+  },
+  usage: { capability: '消费额度账本尚未实现', needs: featureDependencies.usage },
 }
 const text = z.string().trim().min(1).max(20_000)
 const evidence = z
@@ -39,18 +63,23 @@ const selection = z
   })
   .strict()
 const defaultModules = Object.fromEntries(
-  Object.keys(moduleCatalog).map((key) => [
-    key,
-    {
-      selection: 'undecided',
-      basis: 'default',
-      reason: '等待 Agent 根据需求判断；未启用外部服务',
-    },
-  ]),
+  Object.keys(moduleCatalog)
+    .filter((key) => !['database', 'projects', 'emailPassword'].includes(key))
+    .map((key) => [
+      key,
+      {
+        selection: key === 'google' ? 'deferred' : 'undecided',
+        basis: 'default',
+        reason:
+          key === 'google'
+            ? 'Google 登录为可选；默认沿用邮箱和密码，按用户需求再选择'
+            : '等待 Agent 根据需求判断；未启用外部服务',
+      },
+    ]),
 )
 const step = z
   .object({
-    status: z.enum(['pending', 'running', 'done', 'failed']),
+    status: z.enum(['pending', 'running', 'done', 'failed', 'skipped']),
     updatedAt: z.string().optional(),
   })
   .strict()
@@ -77,7 +106,9 @@ export const planSchema = z
         Object.fromEntries(
           Object.keys(moduleCatalog).map((key) => [
             key,
-            selection.default(() => ({ ...defaultModules[key] })),
+            ['database', 'projects', 'emailPassword'].includes(key)
+              ? selection.optional()
+              : selection.default(() => ({ ...defaultModules[key] })),
           ]),
         ),
       )
@@ -105,6 +136,7 @@ export const planSchema = z
           .object({
             id: text,
             title: text,
+            module: z.enum(featureKeys).optional(),
             status: z.enum(['todo', 'doing', 'implemented', 'blocked']),
             evidence,
           })
@@ -119,6 +151,7 @@ export const planSchema = z
             id: text,
             title: text,
             kind: z.enum(['business', 'baseline']),
+            module: z.enum(featureKeys).optional(),
             steps: z.array(text).min(1).max(30),
             expected: text,
             scope: z.enum(['local', 'provider']),
@@ -130,6 +163,10 @@ export const planSchema = z
           .strict(),
       )
       .max(100)
+      .default(() => []),
+    integrations: z
+      .array(integrationSchema)
+      .max(20)
       .default(() => []),
     handoff: z
       .object({ next: z.array(text).default(() => []), blockers: z.array(text).default(() => []) })
@@ -147,7 +184,7 @@ export const planSchema = z
   })
   .strict()
   .superRefine((plan, ctx) => {
-    for (const group of ['decisions', 'tasks', 'acceptance']) {
+    for (const group of ['decisions', 'tasks', 'acceptance', 'integrations']) {
       const ids = plan[group].map((item) => item.id)
       if (new Set(ids).size !== ids.length)
         ctx.addIssue({ code: 'custom', path: [group], message: 'IDs must be unique' })
@@ -208,6 +245,18 @@ export function initialPlan(brief = '', input = {}) {
     ],
     ...input,
   })
+  // A default preference is a planning constraint, never permission to buy services.
+  if (!plan.decisions.some((decision) => decision.id === cloudCostDecisionId))
+    plan.decisions.unshift({
+      id: cloudCostDecisionId,
+      question: '云服务成本策略',
+      status: 'resolved',
+      value: '免费优先；初期新增云服务费用目标 USD 0/月；付费能力按实际需求单独评估',
+      basis: 'default',
+      reason: '先验证免费档容量与运行限制；外部操作和付费授权仍以用户当前指令为准',
+      blocking: false,
+    })
+  plan.integrations = [] // Provider progress belongs to the product, never an initializer input.
   plan.bootstrap = initialBootstrap()
   plan.tasks = plan.tasks.map((task) => ({ ...task, status: 'todo', evidence: [] }))
   plan.acceptance = plan.acceptance.map((item) => ({
@@ -216,7 +265,7 @@ export function initialPlan(brief = '', input = {}) {
     verification: 'unverified',
     evidence: [],
   }))
-  return plan
+  return parsePlan(plan)
 }
 export function loadPlan(root) {
   return parsePlan(JSON.parse(readFileSync(join(root, planFile), 'utf8')))
@@ -232,27 +281,43 @@ export function savePlan(root, input) {
 export function planProblems(root, plan) {
   const errors = [],
     pending = []
+  const capability = featurePlanProblems(root, plan)
+  errors.push(...capability.errors)
+  const active = (item) => !capability.explicit || activeItem(item, capability.features)
   if (!plan.goal.trim()) pending.push('补充产品目标')
   if (!plan.coreFlow.length) pending.push('明确首版核心流程')
   for (const [key, step] of Object.entries(plan.bootstrap))
-    if (typeof step === 'object' && step.status !== 'done') pending.push(`本地初始化未完成：${key}`)
+    if (
+      typeof step === 'object' &&
+      step.status !== 'done' &&
+      !(key === 'database' && step.status === 'skipped' && !capability.features.database)
+    )
+      pending.push(`本地初始化未完成：${key}`)
   for (const [key, choice] of Object.entries(plan.modules)) {
+    if (['ai', 'files', 'usage'].includes(key) && choice.selection === 'required')
+      pending.push(`模块待实现与验收：${key}`)
     if (choice.selection === 'undecided') pending.push(`决定 ${key} 是否需要`)
     if (choice.selection === 'required')
       for (const dependency of moduleCatalog[key].needs)
-        if (plan.modules[dependency].selection !== 'required')
+        if (
+          (!['database', 'projects', 'emailPassword'].includes(dependency) ||
+            capability.explicit ||
+            plan.modules[dependency]) &&
+          plan.modules[dependency]?.selection !== 'required'
+        )
           pending.push(`${key} 的现有实现依赖 ${dependency}，需要明确选择`)
   }
   for (const item of plan.decisions)
     if (item.status === 'open' && item.blocking) pending.push(`待决定：${item.question}`)
   if (!plan.tasks.length) pending.push('拆解业务任务')
   for (const task of plan.tasks)
-    if (task.status !== 'implemented') pending.push(`任务未完成：${task.title}`)
-  if (!plan.acceptance.some((item) => item.kind === 'business' && item.required))
+    if (active(task) && task.status !== 'implemented') pending.push(`任务未完成：${task.title}`)
+  if (!plan.acceptance.some((item) => active(item) && item.kind === 'business' && item.required))
     pending.push('补充必需的业务验收用例，基础测试不代表产品完成')
   for (const item of plan.acceptance)
-    if (item.required && item.status !== 'passed') pending.push(`验收未通过：${item.title}`)
-  for (const item of [...plan.tasks, ...plan.acceptance])
+    if (active(item) && item.required && item.status !== 'passed')
+      pending.push(`验收未通过：${item.title}`)
+  for (const item of [...plan.tasks, ...plan.acceptance].filter(active))
     for (const reference of item.evidence) {
       const path = resolve(root, reference)
       const rel = existsSync(path)
@@ -276,6 +341,21 @@ export function planProblems(root, plan) {
       if (/(?:^|\/)(?:\.dev\.vars[^/]*|\.env[^/]*)$/.test(rel.replaceAll('\\', '/')))
         errors.push(`敏感配置不能作为验收证据：${item.id}`)
     }
+  const selectedIntegrations = plan.integrations.filter(
+    (service) =>
+      !capability.explicit ||
+      (service.provider === 'google' ? capability.features.google : capability.features.mail),
+  )
+  const services = serviceProblems(root, selectedIntegrations)
+  errors.push(...services.errors)
+  pending.push(...services.pending)
+  for (const service of serviceStatus(root, selectedIntegrations))
+    if (
+      service.required &&
+      !service.complete &&
+      plan.acceptance.some((item) => item.id === service.acceptanceId && item.status === 'passed')
+    )
+      errors.push(`外部服务验收记录过期，需重置对应业务用例：${service.id}`)
   for (const message of plan.handoff.blockers) pending.push(`阻塞：${message}`)
   return { errors, pending, ready: errors.length === 0 && pending.length === 0 }
 }
@@ -332,7 +412,12 @@ export function resumeProject(root, { run, dependenciesInstalled = false } = {})
     savePlan(root, plan)
     let status
     try {
-      status = execute(args) === 0 ? 'done' : 'failed'
+      status =
+        execute(args) === 0
+          ? key === 'database' && !featurePlanProblems(root, plan).features.database
+            ? 'skipped'
+            : 'done'
+          : 'failed'
     } catch {
       status = 'failed'
     }
@@ -351,8 +436,19 @@ export function resumeProject(root, { run, dependenciesInstalled = false } = {})
 export function projectStatus(root) {
   const plan = loadPlan(root)
   const problems = planProblems(root, plan)
+  const costPolicy = plan.decisions.find((decision) => decision.id === cloudCostDecisionId)
   return {
     goal: plan.goal,
+    upgrade: upgradeStatus(root),
+    databaseReleases: {
+      staging: databaseStatus(root, 'staging'),
+      production: databaseStatus(root, 'production'),
+    },
+    cloudCostPolicy: costPolicy
+      ? { status: costPolicy.status, value: costPolicy.value, basis: costPolicy.basis }
+      : null,
+    capabilities: featurePlanProblems(root, plan),
+    integrations: serviceStatus(root, plan.integrations),
     bootstrap: plan.bootstrap,
     tasks: plan.tasks.map(({ id, title, status }) => ({ id, title, status })),
     acceptance: plan.acceptance.map(({ id, title, status, scope, verification }) => ({
@@ -366,6 +462,6 @@ export function projectStatus(root) {
     errors: problems.errors,
     pending: problems.pending,
     businessVerified: problems.ready,
-    note: '初始化、业务实现和业务验收分开记录；此状态不代表部署。',
+    note: '初始化、业务实现和业务验收分开记录；此状态不代表部署、费用核验或外部操作授权。',
   }
 }

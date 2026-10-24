@@ -1,5 +1,36 @@
 # Changelog
 
+## 0.2.0 — 2026-10-23（本地候选，未发布）
+
+- Add explicit-environment D1 release plans, read-only history/integrity preflight, private export/bookmark backups, migration verification and resumable failure records. Block deploy on pending/divergent migrations; generate recovery plans without automatic destructive restore. Resolve local DB names from configuration, keep local persistence isolated, and document Agent execution and existing-product adoption.
+
+- 2026-10-24: Add explicit product capability composition across initialization, runtime routes/APIs, local setup, acceptance and deployment. Public showcase needs no DB/auth/mail, Google-only needs no email, and unused modules stay out of navigation. Preserve existing data/resources and payment obligations; add reviewed local profile changes with private backups and isolated profile acceptance.
+
+- Add resumable per-product mail/Google configuration checkpoints, dependency-aware progress, source/evidence fingerprints and precise human handoffs. Preserve independent valid steps, invalidate affected auth acceptance, and expose local status/doctor/check without executing provider operations or treating mock records as live acceptance.
+
+- Add hash baselines for new products and dependency-free upgrade scan/apply/record/rollback tools. Preserve legacy/customized/protected files, reject stale plans and symlink escapes, back up local writes, and retain product edits made after an upgrade.
+- Extend the Aster Skill with existing-product upgrade routing, cross-module review and regression/evidence handoff. Partial adoption preserves the original source version and does not claim provider acceptance.
+
+- Clarify Agent ownership of authorized provider configuration and real acceptance. Add scoped mail handoff guidance and an execution example; preserve explicit deployment restrictions, request only concrete human prerequisites, and keep provider evidence pending until actually verified.
+
+- Add dependency-free Brevo and Resend transactional email adapters using the existing localized auth templates, bounded HTTPS requests, sanitized failures and no automatic retries or provider fallback. Keep local inbox and CF binding delivery compatible.
+- Make mail selection contextual: preserve explicit/working providers, prefer CF for an existing eligible Workers Paid account, otherwise compare Brevo/Resend using preferences and the current environment. Document account activation, sender-domain setup and incremental adoption in existing products.
+- Extend deployment preflight, redacted doctor and service status for the selected provider; require its own secret, reject plaintext mail API keys, and retain real-provider acceptance gates. External mail does not require a CF send-email binding.
+
+- Hide unconfigured optional Google sign-in from visitor forms; default new product plans to email/password with Google deferred. Keep unavailable mail flows out of public signup/reset forms and CTAs, while retaining existing-account sign-in.
+- Add authentication release checks: public email/selected-Google provider records, sender bindings, selected-method consistency and required remote secret names before building/deploying. Staging supports data-only previews; local preflight makes no provider calls.
+- Document auth selection/configuration/acceptance/publication timing and distinguish display names from username login. Real provider records and configuration presence are separate checks.
+
+- Default cloud planning to free-first, separate email costs from Workers/D1, and document dated free-tier limits, runtime acceptance and upgrade criteria.
+- Record a default cloud cost preference in new project decisions and PROJECT.md; expose it in project status/doctor without treating it as billing verification or purchase authorization. Preserve explicit user decisions and compatibility with older plans.
+- Remove unused R2 and Email bindings from the source Worker configuration; optional services require explicit selection and configuration.
+
+- Add Base UI tabs, action menus, checkboxes, switches, tooltips and request-scoped toast feedback, plus skeletons and semantic tables without new dependencies.
+- Expand the local UI reference with interactive list/detail/settings patterns, state previews and distinct workspace/editorial compositions; demos reset on reload and remain unavailable in production.
+- Add URL-backed card/table views and pagination, private project details, action menus and save/delete feedback; reuse grouped layouts for account settings.
+- Add shared page patterns, document dataset/pagination boundaries, and extend control geometry linting to new primitives. Require product-specific visual direction and composition choices in the Aster Skill and project brief.
+- Keep Input/Textarea inert until hydration, matching action controls and preventing first-load form entry from being lost during client initialization.
+
 ## 0.1.2 — 2026-10-22
 
 - API 入口在来源/鉴权等早返回前有界消费请求体；保留 Webhook 原始字节与签名边界，补并发拒绝与请求大小回归。

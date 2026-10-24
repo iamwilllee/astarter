@@ -9,10 +9,12 @@ import { Button, buttonVariants } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { api } from '@/lib/api'
+import { SettingsSection } from '@/components/patterns/page-patterns'
 
 export const Route = createFileRoute('/app/settings')({ component: Settings })
 function Settings() {
   const viewer = getRouteApi('/app').useLoaderData()
+  const { registrationReady } = getRouteApi('__root__').useLoaderData()
   const { t } = useI18n()
   const router = useRouter()
   const save = useMutation({
@@ -32,14 +34,12 @@ function Settings() {
         title={t('account_settings')}
         description={t('manage_your_profile_and_account_security')}
       />
-      <section className="max-w-2xl rounded-xl border bg-card">
-        <div className="border-b p-6">
-          <h2 className="text-sm font-semibold">{t('profile')}</h2>
-          <p className="mt-2 text-xs text-muted-foreground">
-            {t('these_details_belong_to_your_workspace')}
-          </p>
-        </div>
-        <form onSubmit={submit} className="space-y-5 p-6">
+      <SettingsSection
+        id="profile-settings"
+        title={t('profile')}
+        description={t('these_details_belong_to_your_workspace')}
+      >
+        <form onSubmit={submit} className="space-y-5">
           <div className="grid gap-2">
             <Label htmlFor="profile-name">{t('your_name')}</Label>
             <Input
@@ -69,21 +69,29 @@ function Settings() {
             {save.isPending ? t('saving') : t('save_changes')}
           </Button>
         </form>
-      </section>
-      <section className="mt-6 flex max-w-2xl flex-wrap items-center justify-between gap-4 rounded-xl border bg-card p-6">
-        <div className="flex gap-3">
-          <KeyRound className="mt-0.5 size-5 text-muted-foreground" />
-          <div>
-            <h2 className="text-sm font-semibold">{t('password_security')}</h2>
-            <p className="mt-2 text-xs text-muted-foreground">
-              {t('reset_via_email_all_sessions_are_revoked_after_a_password_reset')}
-            </p>
+      </SettingsSection>
+      <SettingsSection
+        id="security-settings"
+        title={t('password_security')}
+        description={t('reset_via_email_all_sessions_are_revoked_after_a_password_reset')}
+      >
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex gap-3">
+            <KeyRound className="mt-0.5 size-5 text-muted-foreground" />
+            <div>
+              <p className="text-sm font-medium">{t('email_address')}</p>
+              <p className="mt-2 break-all text-xs text-muted-foreground">{viewer.user.email}</p>
+            </div>
           </div>
+          {registrationReady ? (
+            <Link to="/forgot-password" className={buttonVariants({ variant: 'outline' })}>
+              {t('reset_password')}
+            </Link>
+          ) : (
+            <p className="text-xs text-muted-foreground">{t('email_access_unavailable')}</p>
+          )}
         </div>
-        <Link to="/forgot-password" className={buttonVariants({ variant: 'outline' })}>
-          {t('reset_password')}
-        </Link>
-      </section>
+      </SettingsSection>
     </>
   )
 }

@@ -11,9 +11,58 @@ Aster 使用 React、TanStack Router / Query、Tailwind CSS、shadcn/ui base-nov
 
 ## 组件样板
 
-启动本地开发服务后访问 `/dev/ui` 或 `/zh/dev/ui`，对照三档尺寸、禁用、错误、加载、Textarea、Badge 和弹窗内 Select。示例只维护当前页面的临时状态，刷新即重置，不创建项目或调用提供商。该页在预发布/生产及非匹配回环来源返回 404。
+启动本地开发服务后访问 `/dev/ui` 或 `/zh/dev/ui`。三个分类分别展示基础组件、可交互页面组合与视觉排版方向：
+
+- 基础组件：三档尺寸、表单/禁用/错误、弹窗内 Select，以及 Checkbox、Switch、DropdownMenu、Tooltip 和 Toast。
+- 页面组合：搜索、表格分页、详情弹窗、分组设置，以及可切换的加载/空态/错误重试。7 条虚构记录用于本地交互演示。
+- 视觉方向：工具型紧凑布局和阅读型排版共用设计变量；它们是排版示例，不是可切换的产品主题。
+
+示例只维护当前页面的临时状态，刷新即重置，不创建项目或调用提供商。该页在预发布/生产及非匹配回环来源返回 404。
 
 新增或调整公共组件后先更新样板，再检查桌面/手机、深浅主题、键盘焦点和实际渲染尺寸。新增 Base UI 子路径时同时维护 `vite.config.ts` 中客户端/SSR 的预打包列表，验证首次路由加载与水合。
+
+## 从产品需求确定界面
+
+先在 `PROJECT.md` 的“界面与内容”写明用户与主要操作、视觉参考或推导依据、信息密度、页面组合及品牌方向。用户已有品牌/界面时优先延续；没有参考时从场景推导，不例行追加一轮设计问卷。
+
+高频操作工具优先清晰导航、可扫描列表和明确操作；内容型产品优先阅读顺序、字体层级和留白。根据内容选择结构，不让每页都变成标题加卡片。当前绿色、侧栏和示例业务不是强制品牌。品牌色和字体通过 `src/styles.css` 管理，深浅主题成对调整，页面不写零散品牌色。视觉示例不宣称不存在的功能、客户或指标。
+
+## 组合与组件索引
+
+| 需求             | 复用入口                                                   | 使用边界                                                         |
+| ---------------- | ---------------------------------------------------------- | ---------------------------------------------------------------- |
+| 搜索与筛选工具栏 | `ListToolbar`，`src/components/patterns/page-patterns.tsx` | search/filters/actions 插槽，URL 状态仍归业务页管理              |
+| 列表加载与无结果 | `ListSkeleton`、`EmptyState`，同上                         | 区分首次空数据与筛选无结果；错误用 ErrorNotice + 重试            |
+| 分组设置         | `SettingsSection`，同上                                    | 标题说明与内容分栏，手机纵向；每个 id 唯一                       |
+| 详情属性         | `DetailList` + Dialog，同上                                | 长文本可换行；弹窗可滚动，保持标题与描述                         |
+| 分页             | `Pagination`，同上                                         | 受控、从 1 开始；调用者限制 page/pageCount，筛选变化重置页码     |
+| 语义表格         | `ui/table.tsx`                                             | 保留 caption/th 语义，窄屏在表格内横向滚动，不撑开整页           |
+| 同页内容分组     | `ui/tabs.tsx`                                              | Tabs / TabsList / TabsTrigger / TabsContent；导航路由用 Link     |
+| 操作菜单         | `ui/dropdown-menu.tsx`                                     | Trigger 用 `render={<Button ... />}`，危险项单独分组并确认       |
+| 勾选和开关       | `ui/checkbox.tsx`、`ui/switch.tsx`                         | Label 关联或包裹控件；name 提交表单，checked 管理受控状态        |
+| 补充说明         | `ui/tooltip.tsx`                                           | Trigger 用 Button，始终保留 aria-label；关键信息不能只藏在提示里 |
+| 操作反馈         | `ui/use-toast.ts` 的 `useToast()`                          | 全局 Provider 已安装；成功后提示，表单错误仍留在字段附近         |
+
+项目列表示范卡片/表格切换、菜单、详情与 URL 状态；账户设置示范 SettingsSection。两者均使用实际账户数据，开发样板的虚构内容不混入业务记录。
+
+示例项目 API 最多返回 100 条，当前套餐最多允许 50 条，所以页面对完整返回结果每页 6 条分页。扩大业务规模时一起增加服务端分页、过滤与 total；不能用当前页的长度冒充全库数量。
+
+```tsx
+const toast = useToast()
+// 在服务端确认保存成功后调用，不把请求发出当成成功。
+toast.add({ title: t('project_saved'), type: 'success' })
+
+<DropdownMenu>
+  <DropdownMenuTrigger render={<Button variant="outline" />}>Actions</DropdownMenuTrigger>
+  <DropdownMenuContent>
+    <DropdownMenuItem onClick={openDetails}>View details</DropdownMenuItem>
+  </DropdownMenuContent>
+</DropdownMenu>
+```
+
+Toast 和 Tooltip Provider 随 React 树创建，SSR 不使用全局可变 manager。Toast 默认 5 秒、最多展示 3 条，支持关闭；不能用短暂通知替代需要用户处理的持久错误。Tabs、Checkbox、Switch 的几何尺寸也由组件层管理，业务层只调整布局。
+
+Tabs 默认手动激活：方向键移动焦点，Enter/Space 切换面板；需要自动切换时显式设置 TabsList 的 `activateOnFocus`。Tooltip 在键盘焦点或悬停时显示，程序调用 focus 不等同于键盘导航。表单输入和操作按钮在水合前禁用，避免首屏尚未接管时输入丢失或发生原生提交。
 
 ## 控件与尺寸契约
 

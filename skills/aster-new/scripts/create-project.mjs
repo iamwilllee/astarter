@@ -1,3 +1,4 @@
+import { featuresFromPlan, featurePreset } from '../../../src/config/feature-policy.mjs'
 import { randomBytes } from 'node:crypto'
 import {
   cpSync,
@@ -15,56 +16,13 @@ import { fileURLToPath } from 'node:url'
 import { parse } from 'jsonc-parser'
 import { initialPlan, savePlan, resumeProject } from '../../../scripts/project-workflow.mjs'
 
-// Deliberate source roots: arbitrary files at the repository root are not product assets.
-const files = [
-  'package.json',
-  'pnpm-lock.yaml',
-  'pnpm-workspace.yaml',
-  '.gitignore',
-  '.node-version',
-  '.prettierrc.json',
-  '.prettierignore',
-  'LICENSE',
-  'THIRD_PARTY_NOTICES.md',
-  'AGENTS.md',
-  'CONTRIBUTING.md',
-  'SECURITY.md',
-  'CHANGELOG.md',
-  'starter-version.json',
-  'components.json',
-  'tsconfig.json',
-  'vite.config.ts',
-  'vitest.config.ts',
-  'playwright.config.ts',
-  'playwright.production.config.ts',
-  'eslint.config.js',
-  'drizzle.config.ts',
-]
-const directories = ['src', 'public', 'migrations', 'scripts', 'skills', 'docs', 'tests', '.github']
-const ignored = new Set([
-  '.git',
-  'node_modules',
-  '.pnpm-store',
-  'dist',
-  '.wrangler',
-  '.tanstack',
-  'coverage',
-  'test-results',
-  'playwright-report',
-  '.DS_Store',
-  'private',
-  '.local',
-  'qa',
-])
-function excluded(path) {
-  const name = basename(path)
-  return (
-    ignored.has(name) ||
-    /^\.env(?:\.|$)/.test(name) ||
-    name.startsWith('.dev.vars') ||
-    /\.(?:log|pem|key|p12|pfx|sqlite|sqlite3|db)(?:-[\w]+)?$/i.test(name)
-  )
-}
+import {
+  templateFiles as files,
+  templateDirectories as directories,
+  excludedTemplatePath as excluded,
+} from '../../../scripts/starter-files.mjs'
+import { initializeBaseline } from '../../../scripts/project-upgrade.mjs'
+
 function inspectTree(path) {
   if (excluded(path)) return
   const stat = lstatSync(path)
@@ -175,7 +133,7 @@ export function parseArgs(args) {
     if (arg === '--no-install') result.install = false
     else if (arg === '--inspect') result.inspect = true
     else if (arg === '--help' || arg === '-h') result.help = true
-    else if (arg === '--name' || arg === '--brief' || arg === '--plan') {
+    else if (arg === '--name' || arg === '--brief' || arg === '--plan' || arg === '--profile') {
       const key = arg.slice(2)
       if (result[key] !== undefined || !args[i + 1] || args[i + 1].startsWith('--'))
         throw new Error(`Expected one value for ${arg}`)
@@ -191,6 +149,7 @@ export function createProject({
   target = process.cwd(),
   name,
   brief = '',
+  profile,
   plan,
   install = true,
   inspect = false,
@@ -212,10 +171,34 @@ export function createProject({
     throw new Error('Product name must be 1–80 characters without control characters')
   if (typeof brief !== 'string' || brief.length > 20_000 || brief.includes('\0'))
     throw new Error('Brief must be at most 20,000 characters without NUL')
+  if (profile && plan)
+    throw new Error('Use either --profile or --plan; Agent plans already contain module choices')
+  const profilePlan = profile
+    ? {
+        modules: Object.fromEntries(
+          Object.entries(featurePreset(profile)).map(([key, enabled]) => [
+            key,
+            {
+              selection: enabled ? 'required' : 'deferred',
+              basis: 'context',
+              reason: `当前任务采用 ${profile} 组合`,
+            },
+          ]),
+        ),
+      }
+    : {}
   const productPlan = initialPlan(
     brief,
-    plan ? JSON.parse(readFileSync(resolve(plan), 'utf8')) : {},
+    plan ? JSON.parse(readFileSync(resolve(plan), 'utf8')) : profilePlan,
   )
+  const selectedFeatures = featuresFromPlan(productPlan)
+  for (const key of ['database', 'projects', 'emailPassword'])
+    if (!productPlan.modules[key])
+      productPlan.modules[key] = {
+        selection: selectedFeatures[key] ? 'required' : 'deferred',
+        basis: 'context',
+        reason: '根据当前产品已选择的认证与数据流程推导；可增量调整',
+      }
   const slug =
     basename(target)
       .toLowerCase()
@@ -313,26 +296,41 @@ export function createProject({
     compatibility_flags: base.compatibility_flags,
     observability: { enabled: true, head_sampling_rate: 0.1 },
     vars: vars('production'),
-    d1_databases: database(false),
+    ...(selectedFeatures.database ? { d1_databases: database(false) } : {}),
     env: {
-      staging: { name: `${slug}-staging`, vars: vars('staging'), d1_databases: database(true) },
+      staging: {
+        name: `${slug}-staging`,
+        vars: vars('staging'),
+        ...(selectedFeatures.database ? { d1_databases: database(true) } : {}),
+      },
     },
   })
-  const local = `ENVIRONMENT=local\nAPP_ORIGIN=http://127.0.0.1:3100\nMAIL_MODE=local\nBILLING_ENABLED=false\nGOOGLE_AUTH_ENABLED=false\nPUBLIC_INDEXABLE=false\n`
+  writeJson(join(target, 'src/config/features.json'), selectedFeatures)
+  const local = `ENVIRONMENT=local\nAPP_ORIGIN=http://127.0.0.1:3100\nMAIL_MODE=${selectedFeatures.mail && selectedFeatures.database ? 'local' : 'disabled'}\nBILLING_ENABLED=false\nGOOGLE_AUTH_ENABLED=false\nPUBLIC_INDEXABLE=false\n`
   writeFileSync(
     join(target, '.dev.vars'),
-    local + `BETTER_AUTH_SECRET=${randomBytes(32).toString('hex')}\n`,
+    local +
+      (selectedFeatures.auth ? `BETTER_AUTH_SECRET=${randomBytes(32).toString('hex')}\n` : ''),
     { mode: 0o600, flag: 'wx' },
   )
   writeFileSync(
     join(target, '.dev.vars.example'),
-    local + 'BETTER_AUTH_SECRET=replace-with-a-random-secret-at-least-32-characters\n',
+    local +
+      (selectedFeatures.auth
+        ? 'BETTER_AUTH_SECRET=replace-with-a-random-secret-at-least-32-characters\n'
+        : ''),
   )
   writeFileSync(join(target, '.npmrc'), 'save-exact=true\n')
   const oneLine = (value) => markdown(value.replace(/[\r\n]+/g, ' '))
+  const costPolicy = productPlan.decisions.find((decision) => decision.id === 'cloud-cost-policy')
   const project = readFileSync(join(source, 'docs/templates/PROJECT-BRIEF.md'), 'utf8')
     .replace('- 名称：待填写', () => `- 名称：${markdown(name)}`)
     .replace('- 目标用户：待填写', () => `- 目标用户：${oneLine(productPlan.audience)}`)
+    .replace(
+      '- 云服务成本策略：待填写（默认免费优先）。',
+      () =>
+        `- 云服务成本策略：${costPolicy.status === 'resolved' ? oneLine(costPolicy.value) : '待确认；先按免费优先准备方案'}。`,
+    )
     .replace(
       '- 一句话说明：为【哪类用户】在【什么场景】解决【什么问题】。',
       () => `- 一句话说明：${oneLine(productPlan.goal) || '待填写'}`,
@@ -365,6 +363,7 @@ export function createProject({
       '[开发手册](docs/DEVELOPMENT.md) · [Agent 指南](docs/AGENT-GUIDE.md) · [部署手册](docs/DEPLOYMENT.md)\n\n' +
       '底座来源版本见 starter-version.json；本产品需独立完成业务验收。\n',
   )
+  initializeBaseline(source, target)
   if (install) resumeProject(target)
   return { target, name, slug, installed: install, mode: 'initialized', previousMode: context.mode }
 }
@@ -374,7 +373,7 @@ if (process.argv[1] && realpathSync(resolve(process.argv[1])) === fileURLToPath(
     const options = parseArgs(process.argv.slice(2))
     if (options.help)
       console.log(
-        'Usage: pnpm aster:new [directory] [--name "Product"] [--brief "Requirements"] [--plan plan.json] [--no-install] [--inspect]. Directory defaults to the current working directory.',
+        'Usage: pnpm aster:new [directory] [--name "Product"] [--brief "Requirements"] [--plan plan.json | --profile showcase|web-app|billing-test] [--no-install] [--inspect]. Directory defaults to the current working directory.',
       )
     else {
       const result = createProject({

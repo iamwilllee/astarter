@@ -1,3 +1,4 @@
+import { features } from '@/config/features'
 import { createFileRoute } from '@tanstack/react-router'
 import { z } from 'zod'
 import { isMailConfigured } from '@/modules/mail/mail.server'
@@ -18,6 +19,14 @@ async function handler(request: Request) {
         body: text,
       })
       const path = new URL(request.url).pathname
+      if (
+        !features.auth ||
+        (!features.emailPassword &&
+          /\/(?:sign-up\/email|sign-in\/email|send-verification-email|verify-email|request-password-reset|reset-password)$/.test(
+            path,
+          ))
+      )
+        throw new HttpError(404, '接口不存在')
       if (
         [
           '/api/auth/sign-up/email',
@@ -51,6 +60,15 @@ async function handler(request: Request) {
         }
       }
     }
+    const path = new URL(request.url).pathname
+    if (
+      !features.auth ||
+      (!features.emailPassword &&
+        /\/(?:sign-up\/email|sign-in\/email|send-verification-email|verify-email|request-password-reset|reset-password)$/.test(
+          path,
+        ))
+    )
+      throw new HttpError(404, '接口不存在')
     const response = await createAuth(request).handler(request)
     if (!response.ok && release) await release()
     // OAuth/email redirects can have immutable headers. Copy them instead of mutating.

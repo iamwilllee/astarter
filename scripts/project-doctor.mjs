@@ -1,3 +1,4 @@
+import { readFeatures } from './project-features.mjs'
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import net from 'node:net'
@@ -15,6 +16,21 @@ export function probePort(port) {
 // Reports only presence/config shape, never secret values or credential fragments.
 export async function doctor(root, { portProbe = probePort, pnpmVersion } = {}) {
   const checks = []
+  let features
+  try {
+    features = readFeatures(root).features
+  } catch {
+    return {
+      ok: false,
+      checks: [
+        {
+          id: 'modules',
+          status: 'error',
+          message: '模块配置无效；检查依赖和已实现能力，不显示原始内容',
+        },
+      ],
+    }
+  }
   const add = (id, status, message) => checks.push({ id, status, message })
   const [major, minor] = process.versions.node.split('.').map(Number)
   add(
@@ -83,17 +99,27 @@ export async function doctor(root, { portProbe = probePort, pnpmVersion } = {}) 
   )
   add(
     'auth-secret',
-    typeof vars.BETTER_AUTH_SECRET === 'string' &&
-      vars.BETTER_AUTH_SECRET.length >= 32 &&
-      !vars.BETTER_AUTH_SECRET.startsWith('replace-')
-      ? 'ok'
-      : 'error',
-    '本地认证密钥需至少 32 字符；不会打印或自动替换',
+    !features.auth
+      ? 'unknown'
+      : typeof vars.BETTER_AUTH_SECRET === 'string' &&
+          vars.BETTER_AUTH_SECRET.length >= 32 &&
+          !vars.BETTER_AUTH_SECRET.startsWith('replace-')
+        ? 'ok'
+        : 'error',
+    features.auth ? '本地认证密钥需至少 32 字符；不会打印或自动替换' : '认证未选；无需认证密钥',
   )
   add(
     'd1-binding',
-    !config ? 'unknown' : config?.d1_databases?.some((db) => db.binding === 'DB') ? 'ok' : 'error',
-    '需要 DB binding；本地检查不证明云端数据库可用',
+    !features.database
+      ? 'unknown'
+      : !config
+        ? 'unknown'
+        : config?.d1_databases?.some((db) => db.binding === 'DB')
+          ? 'ok'
+          : 'error',
+    features.database
+      ? '需要 DB binding；本地检查不证明云端数据库可用'
+      : '数据库未选；无需 DB binding',
   )
   add(
     'local-schema',
@@ -112,7 +138,39 @@ export async function doctor(root, { portProbe = probePort, pnpmVersion } = {}) 
       add('project-plan', 'error', '产品计划无效，先运行 project:check')
     }
   } else add('project-plan', 'warn', '尚无产品计划；底座源目录不需要填写虚构产品')
-  const required = (key) => plan?.modules[key].selection === 'required'
+  if (plan) {
+    try {
+      const { upgradeStatus } = await import('./project-upgrade.mjs')
+      const upgrade = upgradeStatus(root)
+      add(
+        'starter-baseline',
+        upgrade.baseline === 'recorded' ? 'ok' : 'warn',
+        upgrade.baseline === 'recorded'
+          ? '已记录本地哈希基线；未扫描上游或验证升级'
+          : '旧产品缺少哈希基线；升级需保守审查，不自动覆盖或伪造基线',
+      )
+    } catch {
+      add('starter-baseline', 'error', '升级基线无效，先检查元数据，不自动覆盖')
+    }
+    const { serviceStatus } = await import('./service-workflow.mjs')
+    const services = serviceStatus(root, plan.integrations)
+    add(
+      'external-progress',
+      services.some((item) => !item.complete) ? 'warn' : 'ok',
+      services.length
+        ? '外部服务进度已读取；用 project:service status 查看断点，仍需核实当前授权与远端状态'
+        : '暂无外部服务进度；接通任务按需建立，不从配置存在推断完成',
+    )
+    const costPolicy = plan.decisions.find((decision) => decision.id === 'cloud-cost-policy')
+    add(
+      'cloud-cost-policy',
+      costPolicy?.status === 'resolved' ? 'ok' : 'warn',
+      costPolicy?.status === 'resolved'
+        ? '已记录成本偏好；未查询账户套餐、共享额度或账单，也不构成付费授权'
+        : '尚未记录云成本策略；上云前按免费优先评估，不默认升级账户',
+    )
+  }
+  const required = (key) => plan?.modules[key]?.selection === 'required'
   const effective = { ...config?.vars, ...vars }
   const present = (key) =>
     typeof vars[key] === 'string' &&
@@ -120,10 +178,18 @@ export async function doctor(root, { portProbe = probePort, pnpmVersion } = {}) 
     !/^(?:replace-|\.\.\.)/.test(vars[key])
   add(
     'mail',
-    effective.MAIL_MODE === 'local' ? 'ok' : 'warn',
-    effective.MAIL_MODE === 'local'
-      ? '本地收件箱模式；真实发信尚未验收'
-      : '未使用本地邮件；真实发信需 EMAIL binding 与域名验收',
+    !features.mail ? 'unknown' : effective.MAIL_MODE === 'local' ? 'ok' : 'warn',
+    !features.mail
+      ? '邮件模块未选；不要求邮件配置或验收'
+      : effective.MAIL_MODE === 'local'
+        ? '本地收件箱模式；真实发信尚未验收'
+        : effective.MAIL_MODE === 'cloudflare'
+          ? 'Cloudflare 发信需目标账户 Workers Paid、发信资格、EMAIL binding、域名及真实投递验收；本检查未查询账户'
+          : ['brevo', 'resend'].includes(effective.MAIL_MODE)
+            ? present(effective.MAIL_MODE === 'brevo' ? 'BREVO_API_KEY' : 'RESEND_API_KEY')
+              ? '所选外部邮件的本地凭据存在；远端凭据、域名、账户激活和投递均未验证'
+              : '所选外部邮件缺少本地 API key；如仅在远端保存则由 deploy 核对名称，不要下载或打印远端密钥'
+            : '未选择远端邮件；按用户偏好、已有服务及目标账户套餐选择 cloudflare、brevo 或 resend',
   )
   const googleConfigured =
     effective.GOOGLE_AUTH_ENABLED === 'true' &&
@@ -131,10 +197,18 @@ export async function doctor(root, { portProbe = probePort, pnpmVersion } = {}) 
     present('GOOGLE_CLIENT_SECRET')
   add(
     'google',
-    googleConfigured ? 'warn' : required('google') ? 'warn' : 'unknown',
-    googleConfigured
-      ? '本地 Google 配置形状齐备；真实登录/回调未验证'
-      : 'Google 待配置：GOOGLE_AUTH_ENABLED、GOOGLE_CLIENT_ID、GOOGLE_CLIENT_SECRET',
+    !features.google
+      ? 'unknown'
+      : googleConfigured
+        ? 'warn'
+        : required('google')
+          ? 'warn'
+          : 'unknown',
+    !features.google
+      ? 'Google 未选；不要求 OAuth 配置或验收'
+      : googleConfigured
+        ? '本地 Google 配置形状齐备；真实登录/回调未验证'
+        : 'Google 待配置：GOOGLE_AUTH_ENABLED、GOOGLE_CLIENT_ID、GOOGLE_CLIENT_SECRET',
   )
   const stripeConfigured = ['STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET', 'STRIPE_PRICE_ID'].every(
     present,
@@ -143,16 +217,20 @@ export async function doctor(root, { portProbe = probePort, pnpmVersion } = {}) 
     'stripe',
     vars.STRIPE_SECRET_KEY?.startsWith('sk_live_')
       ? 'error'
-      : stripeConfigured
-        ? 'warn'
-        : required('billing')
+      : !features.billing
+        ? 'unknown'
+        : stripeConfigured
           ? 'warn'
-          : 'unknown',
+          : required('billing')
+            ? 'warn'
+            : 'unknown',
     vars.STRIPE_SECRET_KEY?.startsWith('sk_live_')
       ? '禁止使用 Stripe live 密钥'
-      : stripeConfigured
-        ? '本地 Stripe 配置存在；仅支持测试，结账/Webhook 尚待真实测试验收'
-        : 'Stripe 测试待配置：STRIPE_SECRET_KEY、STRIPE_WEBHOOK_SECRET、STRIPE_PRICE_ID；新结账另需 BILLING_ENABLED',
+      : !features.billing
+        ? '支付模块未选；不要求支付配置或验收'
+        : stripeConfigured
+          ? '本地 Stripe 配置存在；仅支持测试，结账/Webhook 尚待真实测试验收'
+          : 'Stripe 测试待配置：STRIPE_SECRET_KEY、STRIPE_WEBHOOK_SECRET、STRIPE_PRICE_ID；新结账另需 BILLING_ENABLED',
   )
   for (const key of ['ai', 'files', 'usage'])
     if (required(key))
@@ -172,5 +250,30 @@ export async function doctor(root, { portProbe = probePort, pnpmVersion } = {}) 
     'unknown',
     '未读取远端 secrets、资格或资源；云端邮件/Google/Stripe 需独立配置与真实验收',
   )
+  if (features.database) {
+    try {
+      const { databaseStatus } = await import('./database-release.mjs')
+      const reports = ['staging', 'production'].map((environment) =>
+        databaseStatus(root, environment),
+      )
+      const needsReview = reports.some(
+        (report) =>
+          report.locked || report.releases.some((item) => item.phase !== 'verified' || item.stale),
+      )
+      add(
+        'database-releases',
+        needsReview ? 'warn' : 'unknown',
+        needsReview
+          ? '本地有锁、未完成或过期的数据库发布记录；用 project:database status 核对，再检查远端。不会自动解锁或写库'
+          : '未发现待恢复的本地数据库发布；不代表远端迁移或业务已通过',
+      )
+    } catch {
+      add(
+        'database-releases',
+        'warn',
+        '数据库发布记录暂不可读；安装依赖后检查 project:database status，不显示私有内容',
+      )
+    }
+  }
   return { ok: checks.every((item) => item.status !== 'error'), checks }
 }

@@ -12,11 +12,24 @@ const uiDependencies = [
   '@base-ui/react/input',
   '@base-ui/react/dialog',
   '@base-ui/react/select',
+  '@base-ui/react/tabs',
+  '@base-ui/react/menu',
+  '@base-ui/react/checkbox',
+  '@base-ui/react/switch',
+  '@base-ui/react/tooltip',
+  '@base-ui/react/toast',
 ]
 
 export default defineConfig({
   build: process.env.STARTER_SMOKE_OUT ? { outDir: process.env.STARTER_SMOKE_OUT } : {},
-  resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
+  resolve: {
+    alias: {
+      ...(process.env.STARTER_SMOKE_FEATURES
+        ? { '@/config/features.json': process.env.STARTER_SMOKE_FEATURES }
+        : {}),
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
+    },
+  },
   optimizeDeps: { include: uiDependencies },
   environments: { ssr: { optimizeDeps: { include: uiDependencies } } },
   plugins: [

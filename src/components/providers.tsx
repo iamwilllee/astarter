@@ -1,6 +1,8 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createContext, useContext, useState, type ReactNode } from 'react'
 import { translate, localizePath, type Locale, type MessageKey } from '@/i18n/core'
+import { ToastProvider } from './ui/toast'
+import { TooltipProvider } from './ui/tooltip'
 
 interface I18n {
   locale: Locale
@@ -29,7 +31,14 @@ export function Providers({ children, locale }: { children: ReactNode; locale: L
           t: (key, values) => translate(locale, key, values),
         }}
       >
-        {children}
+        <TooltipProvider delay={400}>
+          <ToastProvider
+            dismissLabel={translate(locale, 'dismiss_notification')}
+            regionLabel={translate(locale, 'notifications')}
+          >
+            {children}
+          </ToastProvider>
+        </TooltipProvider>
       </LocaleContext.Provider>
     </QueryClientProvider>
   )

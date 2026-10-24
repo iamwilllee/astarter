@@ -25,17 +25,6 @@
       "migrations_dir": "migrations",
     },
   ],
-  "r2_buckets": [
-    {
-      "binding": "FILES",
-      "bucket_name": "starter-files",
-    },
-  ],
-  "send_email": [
-    {
-      "name": "EMAIL",
-    },
-  ],
   "env": {
     "staging": {
       "name": "starter-staging",

@@ -1,3 +1,4 @@
+import { featurePreset } from '../src/config/feature-policy.mjs'
 import { randomBytes, randomUUID } from 'node:crypto'
 import { mkdirSync, readFileSync, writeFileSync, existsSync, unlinkSync } from 'node:fs'
 import { spawn, spawnSync } from 'node:child_process'
@@ -14,6 +15,27 @@ const output = join(work, 'dist')
 const state = join(work, 'state')
 const base = parse(readFileSync('wrangler.jsonc', 'utf8'), [], { allowTrailingComma: true })
 const origin = 'https://127.0.0.1:3110'
+const args = process.argv.slice(2)
+if (
+  args.length &&
+  (args.length !== 2 || args[0] !== '--profile' || !['showcase', 'google-only'].includes(args[1]))
+)
+  throw new Error('Use test:production [--profile showcase|google-only]')
+const profile = args[1] ?? 'default'
+const features =
+  profile === 'showcase'
+    ? featurePreset('showcase')
+    : profile === 'google-only'
+      ? {
+          ...featurePreset('web-app'),
+          emailPassword: false,
+          mail: false,
+          google: true,
+          projects: false,
+        }
+      : { ...JSON.parse(readFileSync('src/config/features.json', 'utf8')), google: true }
+const featureConfig = join(work, 'features.json')
+writeFileSync(featureConfig, JSON.stringify(features))
 writeFileSync(
   config,
   JSON.stringify({
@@ -27,28 +49,34 @@ writeFileSync(
       MAIL_MODE: 'disabled',
       MAIL_FROM: 'Aster <no-reply@example.invalid>',
       BILLING_ENABLED: 'false',
-      GOOGLE_AUTH_ENABLED: 'true',
+      GOOGLE_AUTH_ENABLED: features.google ? 'true' : 'false',
       PUBLIC_INDEXABLE: 'false',
     },
-    d1_databases: [
-      {
-        binding: 'DB',
-        database_name: 'starter-smoke-db',
-        database_id: randomUUID(),
-        migrations_dir: resolve('migrations'),
-      },
-    ],
+    d1_databases: features.database
+      ? [
+          {
+            binding: 'DB',
+            database_name: 'starter-smoke-db',
+            database_id: randomUUID(),
+            migrations_dir: resolve('migrations'),
+          },
+        ]
+      : [],
   }),
 )
 writeFileSync(
   join(work, '.dev.vars'),
-  `BETTER_AUTH_SECRET=${randomBytes(32).toString('hex')}\nGOOGLE_CLIENT_ID=fixture-only.apps.googleusercontent.com\nGOOGLE_CLIENT_SECRET=fixture-only-not-a-real-google-secret\n`,
+  features.auth
+    ? `BETTER_AUTH_SECRET=${randomBytes(32).toString('hex')}\nGOOGLE_CLIENT_ID=fixture-only.apps.googleusercontent.com\nGOOGLE_CLIENT_SECRET=fixture-only-not-a-real-google-secret\n`
+    : '',
   { mode: 0o600 },
 )
 const redirect = resolve('.wrangler/deploy/config.json')
 const previous = existsSync(redirect) ? readFileSync(redirect) : null
 const taskEnv = {
   ...process.env,
+  STARTER_SMOKE_PROFILE: profile,
+  STARTER_SMOKE_FEATURES: featureConfig,
   STARTER_SMOKE_CONFIG: config,
   STARTER_SMOKE_OUT: output,
   STARTER_SMOKE_URL: origin,
@@ -57,7 +85,7 @@ const taskEnv = {
 }
 for (const key of Object.keys(taskEnv)) {
   if (
-    /^(GOOGLE_|STRIPE_)/.test(key) ||
+    /^(GOOGLE_|STRIPE_|BREVO_|RESEND_)/.test(key) ||
     [
       'BETTER_AUTH_SECRET',
       'CLOUDFLARE_ENV',
@@ -99,19 +127,20 @@ let code = 1
 try {
   await assertPortAvailable()
   run(['exec', 'vite', 'build'])
-  run([
-    'exec',
-    'wrangler',
-    'd1',
-    'migrations',
-    'apply',
-    'starter-smoke-db',
-    '--config',
-    config,
-    '--local',
-    '--persist-to',
-    state,
-  ])
+  if (features.database)
+    run([
+      'exec',
+      'wrangler',
+      'd1',
+      'migrations',
+      'apply',
+      'starter-smoke-db',
+      '--config',
+      config,
+      '--local',
+      '--persist-to',
+      state,
+    ])
   server = spawn(
     'pnpm',
     [

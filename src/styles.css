@@ -89,8 +89,8 @@
     cursor: pointer;
   }
   ::selection {
-    background: #d1e4cd;
-    color: #183d26;
+    background: color-mix(in srgb, var(--primary) 20%, var(--background));
+    color: var(--foreground);
   }
   :focus-visible {
     outline: 2px solid var(--ring);

@@ -1,5 +1,13 @@
 const nativeControls = new Set(['button', 'input', 'select', 'textarea'])
-const sizedControls = new Set(['Button', 'Input', 'SelectTrigger', 'Textarea'])
+const sizedControls = new Set([
+  'Button',
+  'Input',
+  'SelectTrigger',
+  'Textarea',
+  'TabsTrigger',
+  'Checkbox',
+  'Switch',
+])
 const geometry =
   /^(?:!?)(?:(?:h|min-h|max-h|size|p|py|pt|pb|rounded|leading)(?:-|$)|text-(?:xs|sm|base|lg|xl|[2-9]xl|\[)|\[(?:height|min-height|max-height|padding|font-size|line-height|border-radius):)/
 const geometryProperties = new Set([
@@ -91,7 +99,11 @@ export default {
         const controls = new Set()
         return {
           ImportDeclaration(node) {
-            if (!/\/ui\/(?:button|input|select|textarea)(?:\.tsx?)?$/.test(node.source.value))
+            if (
+              !/\/ui\/(?:button|input|select|textarea|tabs|checkbox|switch)(?:\.tsx?)?$/.test(
+                node.source.value,
+              )
+            )
               return
             for (const specifier of node.specifiers)
               if (

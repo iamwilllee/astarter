@@ -1,3 +1,5 @@
+import { features } from '@/config/features'
+import { database } from '@/server/database.server'
 import Stripe from 'stripe'
 import { env } from 'cloudflare:workers'
 import { HttpError, boundedText } from '@/server/http.server'
@@ -19,7 +21,7 @@ interface SubscriptionRow {
 }
 
 export function billingStatus() {
-  const enabled = env.BILLING_ENABLED === 'true'
+  const enabled = features.billing && env.BILLING_ENABLED === 'true'
   const configured =
     isTestKey(env.STRIPE_SECRET_KEY) && !!env.STRIPE_WEBHOOK_SECRET && !!env.STRIPE_PRICE_ID
   return { enabled, configured, mode: 'test' as const, ready: enabled && configured }
@@ -33,9 +35,15 @@ function stripeClient() {
   })
 }
 export async function getBilling(userId: string) {
-  const rows = await env.DB.prepare(
-    'SELECT * FROM subscription WHERE user_id = ? ORDER BY updated_at DESC',
-  )
+  if (!features.billing)
+    return {
+      provider: { enabled: false, configured: false, mode: 'test' as const, ready: false },
+      plan: 'free' as const,
+      projectLimit: plans.free.projectLimit,
+      subscription: null,
+    }
+  const rows = await database()
+    .prepare('SELECT * FROM subscription WHERE user_id = ? ORDER BY updated_at DESC')
     .bind(userId)
     .all<SubscriptionRow>()
   const pro = rows.results.find((row) => hasProAccess(row, env.STRIPE_PRICE_ID))
@@ -58,9 +66,10 @@ export async function checkout(userId: string, email: string, locale: Locale = '
   const stripe = stripeClient()
   if ((await getBilling(userId)).plan === 'pro')
     throw new HttpError(409, '已有有效订阅，请通过账单门户管理')
-  const existing = await env.DB.prepare(
-    'SELECT customer_id FROM subscription WHERE user_id = ? ORDER BY updated_at DESC LIMIT 1',
-  )
+  const existing = await database()
+    .prepare(
+      'SELECT customer_id FROM subscription WHERE user_id = ? ORDER BY updated_at DESC LIMIT 1',
+    )
     .bind(userId)
     .first<{ customer_id: string }>()
   const result = await stripe.checkout.sessions.create(
@@ -79,18 +88,20 @@ export async function checkout(userId: string, email: string, locale: Locale = '
     },
   )
   if (!result.url) throw new HttpError(502, '支付服务没有返回结账地址')
-  await env.DB.prepare(
-    'INSERT INTO checkout (id, user_id, status, created_at) VALUES (?, ?, ?, ?) ON CONFLICT(id) DO NOTHING',
-  )
+  await database()
+    .prepare(
+      'INSERT INTO checkout (id, user_id, status, created_at) VALUES (?, ?, ?, ?) ON CONFLICT(id) DO NOTHING',
+    )
     .bind(result.id, userId, 'open', Date.now())
     .run()
   return { url: result.url }
 }
 export async function portal(userId: string, locale: Locale = 'en') {
   const stripe = stripeClient()
-  const sub = await env.DB.prepare(
-    'SELECT customer_id FROM subscription WHERE user_id = ? ORDER BY updated_at DESC LIMIT 1',
-  )
+  const sub = await database()
+    .prepare(
+      'SELECT customer_id FROM subscription WHERE user_id = ? ORDER BY updated_at DESC LIMIT 1',
+    )
     .bind(userId)
     .first<{ customer_id: string }>()
   if (!sub) throw new HttpError(404, '还没有可管理的订阅')
@@ -110,48 +121,60 @@ async function reconcile(
   checkoutId?: string,
 ) {
   for (let attempt = 0; attempt < 4; attempt++) {
-    if (await env.DB.prepare('SELECT id FROM billing_event WHERE id = ?').bind(event.id).first())
+    if (
+      await database().prepare('SELECT id FROM billing_event WHERE id = ?').bind(event.id).first()
+    )
       return
-    const previous = await env.DB.prepare('SELECT revision, user_id FROM subscription WHERE id = ?')
+    const previous = await database()
+      .prepare('SELECT revision, user_id FROM subscription WHERE id = ?')
       .bind(subscriptionId)
       .first<{ revision: number; user_id: string }>()
     const sub = await stripe.subscriptions.retrieve(subscriptionId)
     const userId = sub.metadata.userId
-    if (!userId || !(await env.DB.prepare('SELECT id FROM user WHERE id = ?').bind(userId).first()))
+    if (
+      !userId ||
+      !(await database().prepare('SELECT id FROM user WHERE id = ?').bind(userId).first())
+    )
       throw new HttpError(422, '订阅缺少有效的用户关联')
     if (previous && previous.user_id !== userId) throw new HttpError(422, '订阅用户关联发生变化')
     const item = sub.items.data.find((entry) => entry.price.id === env.STRIPE_PRICE_ID)
     const syncId = crypto.randomUUID()
     const customer = typeof sub.customer === 'string' ? sub.customer : sub.customer.id
-    const results = await env.DB.batch([
-      env.DB.prepare(
-        `INSERT INTO subscription (id, user_id, customer_id, status, price_id, current_period_end, cancel_at_period_end, revision, sync_id, updated_at)
+    const results = await database().batch([
+      database()
+        .prepare(
+          `INSERT INTO subscription (id, user_id, customer_id, status, price_id, current_period_end, cancel_at_period_end, revision, sync_id, updated_at)
         VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
         ON CONFLICT(id) DO UPDATE SET status=excluded.status, price_id=excluded.price_id,
         current_period_end=excluded.current_period_end, cancel_at_period_end=excluded.cancel_at_period_end,
         revision=subscription.revision+1, sync_id=excluded.sync_id, updated_at=excluded.updated_at
         WHERE subscription.revision = ? AND subscription.user_id = excluded.user_id`,
-      ).bind(
-        sub.id,
-        userId,
-        customer,
-        sub.status,
-        item?.price.id ?? '',
-        item?.current_period_end ?? 0,
-        sub.cancel_at_period_end ? 1 : 0,
-        syncId,
-        Date.now(),
-        previous?.revision ?? 0,
-      ),
-      env.DB.prepare(
-        `INSERT INTO billing_event (id, type, processed_at)
+        )
+        .bind(
+          sub.id,
+          userId,
+          customer,
+          sub.status,
+          item?.price.id ?? '',
+          item?.current_period_end ?? 0,
+          sub.cancel_at_period_end ? 1 : 0,
+          syncId,
+          Date.now(),
+          previous?.revision ?? 0,
+        ),
+      database()
+        .prepare(
+          `INSERT INTO billing_event (id, type, processed_at)
         SELECT ?, ?, ? WHERE EXISTS (SELECT 1 FROM subscription WHERE id = ? AND sync_id = ?)
         ON CONFLICT(id) DO NOTHING`,
-      ).bind(event.id, event.type, Date.now(), sub.id, syncId),
-      env.DB.prepare(
-        `UPDATE checkout SET status='complete' WHERE id = ? AND user_id = ?
+        )
+        .bind(event.id, event.type, Date.now(), sub.id, syncId),
+      database()
+        .prepare(
+          `UPDATE checkout SET status='complete' WHERE id = ? AND user_id = ?
         AND EXISTS (SELECT 1 FROM subscription WHERE id = ? AND sync_id = ?)`,
-      ).bind(checkoutId ?? '', userId, sub.id, syncId),
+        )
+        .bind(checkoutId ?? '', userId, sub.id, syncId),
     ])
     if (results[0]?.meta.changes) return
   }

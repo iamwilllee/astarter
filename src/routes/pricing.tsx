@@ -1,12 +1,20 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { features } from '@/config/features'
+import { notFound } from '@tanstack/react-router'
+import { createFileRoute, Link, getRouteApi } from '@tanstack/react-router'
 import { ArrowUpRight, Check } from 'lucide-react'
 import { buttonVariants } from '@/components/ui/button'
 import { Logo, Preferences } from '@/components/common'
 import { useI18n } from '@/components/providers'
 
-export const Route = createFileRoute('/pricing')({ component: Pricing })
+export const Route = createFileRoute('/pricing')({
+  beforeLoad: () => {
+    if (!features.billing) throw notFound()
+  },
+  component: Pricing,
+})
 function Pricing() {
   const { t } = useI18n()
+  const { registrationReady } = getRouteApi('__root__').useLoaderData()
   return (
     <div className="mx-auto max-w-5xl px-6">
       <header className="flex items-center justify-between py-6">
@@ -56,10 +64,16 @@ function Pricing() {
                 ))}
               </ul>
               <Link
-                to={plan.name === 'Free' ? '/signup' : '/app/billing'}
+                to={
+                  plan.name === 'Free' ? (registrationReady ? '/signup' : '/login') : '/app/billing'
+                }
                 className={`${buttonVariants({ variant: plan.name === 'Pro' ? 'default' : 'outline' })} w-full`}
               >
-                {plan.name === 'Free' ? t('get_started') : t('view_test_configuration')}
+                {plan.name === 'Free'
+                  ? registrationReady
+                    ? t('get_started')
+                    : t('go_to_sign_in')
+                  : t('view_test_configuration')}
                 <ArrowUpRight size={14} />
               </Link>
             </section>

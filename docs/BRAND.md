@@ -19,7 +19,7 @@ Aster 是面向 AI Agent 的开源产品底座，基于 TanStack Start 与 Cloud
 
 ## 命名与兼容
 
-产品名使用 **Aster**，GitHub 仓库保留 `iamwilllee/astarter`。Skill 使用 `$aster-new`，初始化命令使用 `pnpm aster:new`。
+产品名使用 **Aster**，GitHub 仓库使用 `iamwilllee/aster`。Skill 使用 `$aster-new`，初始化命令使用 `pnpm aster:new`。
 
 `starter:new` 是兼容命令。`starter-version.json`、`starter.project.json`、`starter-db`、内部协议头和主题存储键保留原标识，避免影响已有产品的数据与恢复流程；它们不是对外品牌名。已有 README 时，新的初始化说明写入 `ASTER.md`。
 

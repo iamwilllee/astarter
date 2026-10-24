@@ -19,6 +19,7 @@ export function AuthForm({
   token,
   verified,
   googleReady = false,
+  emailPasswordEnabled = true,
   mailReady = true,
   oauthError = false,
 }: {
@@ -26,6 +27,7 @@ export function AuthForm({
   local: boolean
   token?: string
   verified?: boolean
+  emailPasswordEnabled?: boolean
   googleReady?: boolean
   mailReady?: boolean
   oauthError?: boolean
@@ -120,17 +122,20 @@ export function AuthForm({
           </Link>
           <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
           <p className="mb-8 mt-3 text-sm leading-6 text-muted-foreground">{subtitle}</p>
+          {!emailPasswordEnabled && !googleReady && (
+            <p className="mb-5 text-sm text-muted-foreground">{t('sign_in_unavailable')}</p>
+          )}
           {oauthError && (
             <div className="mb-5">
               <ErrorNotice>{t('google_error')}</ErrorNotice>
             </div>
           )}
-          {!success && (mode === 'login' || mode === 'signup') && (
+          {!success && googleReady && (mode === 'login' || mode === 'signup') && (
             <div className="mb-6">
               <Button
                 className="w-full"
                 variant="outline"
-                disabled={!googleReady || pending}
+                disabled={pending}
                 onClick={async () => {
                   setPending(true)
                   setError('')
@@ -147,18 +152,29 @@ export function AuthForm({
                   }
                 }}
               >
-                {googleReady ? t('google_continue') : t('google_unconfigured')}
+                {t('google_continue')}
               </Button>
             </div>
           )}
-          {!mailReady && mode !== 'reset' && (
+          {emailPasswordEnabled && !mailReady && mode !== 'reset' && (
             <div className="mb-5">
-              <ErrorNotice>{t('mail_disabled')}</ErrorNotice>
+              {local ? (
+                <ErrorNotice>{t('mail_disabled')}</ErrorNotice>
+              ) : (
+                <p className="rounded-lg border bg-muted/50 p-3 text-sm leading-6 text-muted-foreground">
+                  {t('email_access_unavailable')}
+                </p>
+              )}
             </div>
           )}
           {verified && !success && (
             <div className="mb-5 rounded-lg border border-primary/20 bg-accent p-3 text-xs text-primary">
               {t('email_verified_you_can_now_sign_in')}
+            </div>
+          )}
+          {error && (
+            <div className="mb-5">
+              <ErrorNotice>{error}</ErrorNotice>
             </div>
           )}
           {success ? (
@@ -187,6 +203,11 @@ export function AuthForm({
                 {t('go_to_sign_in')} →
               </Link>
             </div>
+          ) : !emailPasswordEnabled ? null : !mailReady &&
+            (mode === 'signup' || mode === 'forgot') ? (
+            <Link to="/login" className="text-sm font-medium text-primary">
+              {t('go_to_sign_in')} →
+            </Link>
           ) : (
             <form onSubmit={submit} className="space-y-5">
               {mode === 'signup' && (
@@ -221,7 +242,7 @@ export function AuthForm({
                 <div className="grid gap-2">
                   <div className="flex items-center justify-between">
                     <Label htmlFor="password">{t('password')}</Label>
-                    {mode === 'login' && (
+                    {mode === 'login' && mailReady && (
                       <Link
                         to="/forgot-password"
                         className="text-xs text-muted-foreground hover:text-primary"
@@ -247,7 +268,6 @@ export function AuthForm({
               {mode === 'reset' && !token && (
                 <ErrorNotice>{t('invalid_reset_link_request_a_new_one')}</ErrorNotice>
               )}
-              {error && <ErrorNotice>{error}</ErrorNotice>}
               <Button
                 type="submit"
                 className="w-full"
@@ -267,20 +287,22 @@ export function AuthForm({
                     }[mode]}
                 {!pending && <ArrowRight size={15} />}
               </Button>
-              <p className="text-center text-xs text-muted-foreground">
-                {mode === 'login' ? (
-                  <>
-                    {t('new_here')}{' '}
-                    <Link to="/signup" className="font-medium text-primary">
-                      {t('get_started')}
+              {(mode !== 'login' || mailReady) && (
+                <p className="text-center text-xs text-muted-foreground">
+                  {mode === 'login' ? (
+                    <>
+                      {t('new_here')}{' '}
+                      <Link to="/signup" className="font-medium text-primary">
+                        {t('get_started')}
+                      </Link>
+                    </>
+                  ) : (
+                    <Link to="/login" className="text-primary">
+                      {t('already_have_an_account_sign_in')}
                     </Link>
-                  </>
-                ) : (
-                  <Link to="/login" className="text-primary">
-                    {t('already_have_an_account_sign_in')}
-                  </Link>
-                )}
-              </p>
+                  )}
+                </p>
+              )}
             </form>
           )}
           {mailReady && ((mode === 'signup' && success) || mode === 'login') && (

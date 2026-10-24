@@ -1,0 +1,12 @@
+{
+  "database": true,
+  "auth": true,
+  "emailPassword": true,
+  "google": false,
+  "mail": true,
+  "projects": true,
+  "billing": true,
+  "ai": false,
+  "files": false,
+  "usage": false
+}

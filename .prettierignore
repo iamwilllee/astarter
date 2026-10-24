@@ -10,3 +10,4 @@ playwright-report
 qa
 .local
 starter.project.json
+.aster

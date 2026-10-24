@@ -33,7 +33,7 @@ test('English default, localized links, reload, history and canonical metadata',
   await expect(page.locator('html')).toHaveAttribute('lang', 'zh-CN')
   expect(errors).toEqual([])
 })
-test('resends verification, shows cooldown, and keeps Google unavailable without credentials', async ({
+test('resends verification, shows cooldown, and hides optional Google without credentials', async ({
   page,
   request,
 }) => {
@@ -47,9 +47,8 @@ test('resends verification, shows cooldown, and keeps Google unavailable without
     ).status(),
   ).toBe(200)
   await page.goto('/login')
-  await expect(
-    page.getByRole('button', { name: 'Google sign-in is not configured' }),
-  ).toBeDisabled()
+  await expect(page.getByRole('button', { name: /Google/ })).toHaveCount(0)
+  await expect(page.getByText('Google sign-in is not configured')).toHaveCount(0)
   await page.getByLabel('Resend verification email', { exact: true }).fill(email)
   await page.getByRole('button', { name: 'Resend verification email', exact: true }).click()
   await expect(page.getByRole('status')).toContainText('a new link will be sent')
