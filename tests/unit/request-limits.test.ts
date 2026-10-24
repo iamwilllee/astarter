@@ -1,8 +1,11 @@
-import { beforeAll, afterAll, it, expect } from 'vitest'
+import { beforeAll, afterAll, it, expect, vi } from 'vitest'
 import { env } from 'cloudflare:workers'
 import { testDatabase } from '../helpers/database'
 import { allowPrivateMutation, mutationLimit } from '../../src/server/rate-limit.server'
 import { reserveVerificationResend } from '../../src/modules/auth/resend.server'
+vi.mock('@/config/features', async () => ({
+  features: (await import('../../src/config/feature-policy.mjs')).featurePreset('web-app'),
+}))
 let runtime: Awaited<ReturnType<typeof testDatabase>>
 beforeAll(async () => {
   runtime = await testDatabase()

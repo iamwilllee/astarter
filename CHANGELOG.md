@@ -4,6 +4,7 @@
 
 - Keep tabs disabled until hydration so the first click after a locale reload is not lost. Add a delayed-script regression and retain CI HTML reports, failure screenshots and traces.
 - Support existing products with named production databases while preserving their root local database and explicit restore target; validate staging/production isolation against the actual remote environments.
+- Make generated-product checks follow selected capabilities: exercise billing unit fixtures independently of product flags, validate closed direct entrypoints and adapt browser flows when billing or email authentication is omitted.
 
 - Add explicit-environment D1 release plans, read-only history/integrity preflight, private export/bookmark backups, migration verification and resumable failure records. Block deploy on pending/divergent migrations; generate recovery plans without automatic destructive restore. Resolve local DB names from configuration, keep local persistence isolated, and document Agent execution and existing-product adoption.
 

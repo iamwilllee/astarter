@@ -1,4 +1,4 @@
-import { test, expect } from './fixtures'
+import { test, expect, features } from './fixtures'
 
 const origin = 'http://127.0.0.1:3100'
 
@@ -19,7 +19,14 @@ test('concurrent early mutation errors preserve JSON status and keep the next re
       }),
       request.post('/api/billing/webhook', { data: { fixture: true } }),
     ])
-    expect(responses.map((response) => response.status())).toEqual([403, 401, 401, 401, 503])
+    const projects = features.auth && features.projects
+    expect(responses.map((response) => response.status())).toEqual([
+      projects ? 403 : 404,
+      projects ? 401 : 404,
+      features.auth ? 401 : 404,
+      projects ? 401 : 404,
+      features.auth && features.billing ? 503 : 404,
+    ])
     for (const response of responses) {
       expect(response.headers()['content-type']).toContain('application/json')
       expect(await response.json()).toHaveProperty('error')

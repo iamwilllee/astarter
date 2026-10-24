@@ -4,6 +4,11 @@ import { z } from 'zod'
 import { isMailConfigured, sendAuthMail } from '../../src/modules/mail/mail.server'
 import { mailSender, sendProviderMail } from '../../src/modules/mail/providers.server'
 
+// Keep adapter tests independent of whether this product selected transactional mail.
+vi.mock('@/config/features', async () => ({
+  features: (await import('../../src/config/feature-policy.mjs')).featurePreset('web-app'),
+}))
+
 const origin = 'https://app.product.example'
 const recipient = 'recipient@example.test'
 const link = origin + '/api/auth/verify-email?token=fixture-only'

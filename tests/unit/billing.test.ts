@@ -6,6 +6,11 @@ import { env } from 'cloudflare:workers'
 import { webhook, getBilling } from '../../src/modules/billing/billing.server'
 import { handleApi } from '../../src/server/api.server'
 
+// Exercise billing itself even when a generated product has opted out of that module.
+vi.mock('@/config/features', async () => ({
+  features: (await import('../../src/config/feature-policy.mjs')).featurePreset('billing-test'),
+}))
+
 const secret = 'whsec_local_fixture_only'
 const nativeFetch = globalThis.fetch
 let runtime: Miniflare

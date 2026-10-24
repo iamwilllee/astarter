@@ -98,3 +98,5 @@ pnpm project:modules --input /tmp/module-choices.json --apply
 staging 允许为所选能力准备尚未完成真实验收的版本，仍遵守用户禁止部署等限制。AI/files/usage 尚未实现时，记录必需需求会阻止宣称 ready 和正式发布，不能靠隐藏页面伪装已完成。未选模块的配置/用例不阻塞发布；敏感信息放进公开 JSON、远端 local 收件箱等通用错误仍拒绝。
 
 验证命令：`pnpm check`、`pnpm format:check`、`pnpm test:e2e`；隔离生产组合分别执行 `pnpm test:production`、`pnpm test:production --profile showcase`、`pnpm test:production --profile google-only`。这些使用本地 Worker 与假 OAuth 凭据，不证明 CF 云端 CPU、真实 Google、邮件或收款资格。
+
+必须在生成后的产品目录实际运行检查，不能用底座源码通过的结果替代。浏览器测试读取本产品能力配置：未选的功能验证页面/API 关闭，认证或支付场景只在对应能力选中时执行；支付单元夹具单独启用测试模块，保持其签名与对账覆盖，不迫使普通 web-app 开启支付。关闭不相关用例不能跳过产品的核心业务流程。

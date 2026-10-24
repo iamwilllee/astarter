@@ -1,9 +1,13 @@
 import type { APIRequestContext } from '@playwright/test'
-import { test, expect } from './fixtures'
+import { test, expect, features } from './fixtures'
 import { randomUUID } from 'node:crypto'
 
 const origin = 'http://127.0.0.1:3100'
 const password = 'Fixture-only-password-2026!'
+test.skip(
+  !features.emailPassword || !features.projects,
+  'Requires selected email authentication and projects',
+)
 
 interface Mail {
   recipient: string
@@ -98,7 +102,9 @@ test('registration, verification, projects, quota, isolation, CSRF and session r
     create('并发 D'),
   ])
   expect(concurrent.map((response) => response.status()).sort()).toEqual([201, 201, 409, 409])
-  expect((await request.post('/api/billing/checkout', { headers: { origin } })).status()).toBe(503)
+  expect((await request.post('/api/billing/checkout', { headers: { origin } })).status()).toBe(
+    features.billing ? 503 : 404,
+  )
   expect((await request.get('/api/billing/checkout-status?id=unrelated')).status()).toBe(404)
   const reset = await request.post('/api/auth/request-password-reset', {
     headers: { origin },
@@ -225,16 +231,24 @@ test('browser workflow: sign in, create, edit, reload, filter, settings, delete,
   await expect(page.getByRole('heading', { name: '你的第一个项目，等你开始' })).toBeVisible()
   await page.setViewportSize({ width: 390, height: 844 })
   await page.getByRole('button', { name: '打开导航', exact: true }).click()
-  await page.getByRole('link', { name: '套餐与账单', exact: true }).click()
-  await expect(page.getByRole('heading', { name: '套餐与账单' })).toBeVisible()
+  if (features.billing) {
+    await page.getByRole('link', { name: '套餐与账单', exact: true }).click()
+    await expect(page.getByRole('heading', { name: '套餐与账单' })).toBeVisible()
+    await expect(page.getByRole('button', { name: '支付未配置', exact: true })).toBeDisabled()
+  } else {
+    await expect(page.getByRole('link', { name: '套餐与账单', exact: true })).toHaveCount(0)
+    await page.getByRole('link', { name: '账户设置', exact: true }).click()
+    await expect(page.getByRole('heading', { name: '账户设置' })).toBeVisible()
+  }
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
     true,
   )
-  await expect(page.getByRole('button', { name: '支付未配置', exact: true })).toBeDisabled()
   await page.getByRole('button', { name: '切换明暗主题' }).click()
   await expect(page.locator('html')).toHaveClass(/dark/)
   await page.getByRole('button', { name: 'Switch to English' }).click()
-  await expect(page.getByRole('heading', { name: 'Plan & billing' })).toBeVisible()
+  await expect(
+    page.getByRole('heading', { name: features.billing ? 'Plan & billing' : 'Account settings' }),
+  ).toBeVisible()
   await page.getByRole('button', { name: 'Sign out', exact: true }).click()
   await expect(page).toHaveURL(/\/login/)
   expect((await page.request.get('/api/projects')).status()).toBe(401)

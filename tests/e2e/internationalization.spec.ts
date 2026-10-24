@@ -1,4 +1,4 @@
-import { test, expect } from './fixtures'
+import { test, expect, features } from './fixtures'
 import { randomUUID } from 'node:crypto'
 const origin = 'http://127.0.0.1:3100'
 const password = 'Fixture-only-password-2026!'
@@ -17,19 +17,22 @@ test('English default, localized links, reload, history and canonical metadata',
   await expect(page.locator('html')).toHaveAttribute('lang', 'en')
   await page.getByRole('button', { name: '切换中文' }).click()
   await expect(page).toHaveURL(origin + '/zh')
-  await page.getByRole('link', { name: '套餐', exact: true }).click()
-  await expect(page).toHaveURL(origin + '/zh/pricing')
+  const chinesePath = features.billing ? '/zh/pricing' : '/zh'
+  const englishPath = features.billing ? '/pricing' : '/'
+  if (features.billing) await page.getByRole('link', { name: '套餐', exact: true }).click()
+  else {
+    await expect(page.getByRole('link', { name: '套餐', exact: true })).toHaveCount(0)
+    expect((await request.get('/pricing')).status()).toBe(404)
+  }
+  await expect(page).toHaveURL(origin + chinesePath)
   await page.reload()
   await expect(page.locator('html')).toHaveAttribute('lang', 'zh-CN')
-  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
-    'href',
-    origin + '/zh/pricing',
-  )
-  await expect(page.locator('link[hreflang="en"]')).toHaveAttribute('href', origin + '/pricing')
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', origin + chinesePath)
+  await expect(page.locator('link[hreflang="en"]')).toHaveAttribute('href', origin + englishPath)
   await page.getByRole('button', { name: 'Switch to English' }).click()
-  await expect(page).toHaveURL(origin + '/pricing')
+  await expect(page).toHaveURL(origin + englishPath)
   await page.goBack()
-  await expect(page).toHaveURL(origin + '/zh/pricing')
+  await expect(page).toHaveURL(origin + chinesePath)
   await expect(page.locator('html')).toHaveAttribute('lang', 'zh-CN')
   expect(errors).toEqual([])
 })
@@ -37,6 +40,7 @@ test('resends verification, shows cooldown, and hides optional Google without cr
   page,
   request,
 }) => {
+  test.skip(!features.emailPassword, 'Email authentication is not selected')
   const email = `resend-${randomUUID()}@example.test`
   expect(
     (
@@ -76,6 +80,7 @@ test('resends verification, shows cooldown, and hides optional Google without cr
 test('concurrent resends allow one request per recipient and normalize address casing', async ({
   request,
 }) => {
+  test.skip(!features.emailPassword, 'Email authentication is not selected')
   const email = `race-${randomUUID()}@example.test`
   const post = (address: string) =>
     request.post('/api/auth/send-verification-email', {
@@ -98,6 +103,7 @@ test('Chinese signup, verification callback, localized mail and session refresh 
   page,
   request,
 }) => {
+  test.skip(!features.emailPassword, 'Email authentication is not selected')
   const email = `zh-${randomUUID()}@example.test`
   await page.goto('/zh/signup')
   await page.getByLabel('你的称呼', { exact: true }).fill('中文账户')
